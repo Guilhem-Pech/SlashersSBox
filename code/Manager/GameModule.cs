@@ -5,7 +5,7 @@ public abstract class AGameModule : EntityComponent
 	
 	protected override void OnActivate()
 	{
-		Name = $"{GetType().Name} ({(Game.IsClient ? "Client" : "Server")})";
+		Name = $"{GetType().Name}";
 		base.OnActivate();
 	}
 

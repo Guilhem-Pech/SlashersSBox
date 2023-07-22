@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Sandbox.Utils;
@@ -12,9 +11,7 @@ public class Transition<TEvent> where TEvent: struct, Enum
     private IState m_to;
     private Func<bool> m_guard = () => true;
     private TEvent? m_event = null;
-
-  
-
+	
     public Transition(IState to)
     {
         m_to = to;
@@ -45,7 +42,6 @@ public class Transition<TEvent> where TEvent: struct, Enum
 public class State<TName, TEvent> : IState where TEvent: struct, Enum where TName: Enum
 {
     private static readonly Action? NoActivity = () => { };
-    
     public State(TName name)
     {
         m_name = name;
@@ -90,8 +86,8 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     {
         foreach (Transition<TEvent> transition in m_transitions)
         {
-            if (transition.MatchConditions(fsmEvent))
-                return transition.Destination() as State<TName, TEvent>;
+	        if ( transition.MatchConditions( fsmEvent ) )
+		        return transition.Destination() as State<TName, TEvent>;
         }
         return null;
     }
@@ -118,7 +114,10 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     public void OnUpdate() { m_onUpdateAction?.Invoke(); }
     public void OnExit() { m_onExitAction?.Invoke(); }
 
-    
+    public override string ToString()
+    {
+	    return Name.ToString();
+    }
 }
 
 public class HfsmBuilder<TName, TEvent> where TEvent : struct, Enum where TName : Enum
@@ -247,7 +246,7 @@ public class HfsmBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
                 from.AddTransition(new Transition<TEvent>(to));
             }
         }
-
+		Log.Info( $"[HFSM] HFSM Built with initial state: {initial}" );
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 }
@@ -257,6 +256,9 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     private State<TName, TEvent>? m_currentState;
 
     private Queue<TEvent?> m_eventToTreat = new();
+    public bool EnableDebugLog { set; get; } = false;
+    
+    public string GetDebugCurrentStateName() => m_currentState?.Name.ToString() ?? "No active current state";
     
     public HFSM(State<TName, TEvent> initial)
     {
@@ -332,6 +334,8 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         List<State<TName, TEvent>> exitingStates = activeStatesHierarchy.Except(futureStatesHierarchy).ToList();
         for (int index = exitingStates.Count - 1; index >= 0; --index)
         {
+	        if(EnableDebugLog)
+		        Log.Info( $"[HFSM] Exiting {exitingStates[index].Name}" );
             exitingStates[index].OnExit();
         }
         
@@ -340,6 +344,8 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         List<State<TName, TEvent>> enteringStates = futureStatesHierarchy.Except(activeStatesHierarchy).ToList();
         foreach (State<TName, TEvent> state in enteringStates)
         {
+	        if(EnableDebugLog)
+		        Log.Info( $"[HFSM] Entering {state.Name}" );
             state.OnEnter();
         }
     }

@@ -1,4 +1,6 @@
-﻿using Sandbox.Utils;
+﻿using System;
+using System.Threading.Tasks;
+using Sandbox.Utils;
 
 namespace Sandbox.Manager;
 
@@ -6,13 +8,15 @@ namespace Sandbox.Manager;
 public class GameFlowModule : AGameModule
 {
 	private HFSM<States, TransitionEvents> m_hfsm;
-	
+
+	public string DebugCurrentState => m_hfsm != null ? m_hfsm.GetDebugCurrentStateName() : string.Empty;
+
 	protected override void OnActivate()
 	{
 		BuildHFSM();
 		base.OnActivate();
 	}
-
+	
 	[GameEvent.Tick]
 	private void OnUpdate()
 	{
@@ -23,7 +27,6 @@ public class GameFlowModule : AGameModule
 	{
 		m_hfsm.Stop();
 	}
-
 
 	private void BuildHFSM()
 	{
@@ -71,6 +74,7 @@ public class GameFlowModule : AGameModule
 			}
 		}
 		m_hfsm = builder.Build();
+		m_hfsm.EnableDebugLog = Enabled;
 	}
 }
 

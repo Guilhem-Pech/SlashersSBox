@@ -26,7 +26,11 @@ public partial class Slashers : Sandbox.GameManager
 	/// </summary>
 	public Slashers() 
 	{
-		Components.Create<GameFlowModule>();
+		if ( Game.IsServer )
+		{
+			Components.Create<GameFlowModule>();
+		}
+		
 		if ( Game.IsClient )
 		{
 			Game.RootPanel = new Hud();
