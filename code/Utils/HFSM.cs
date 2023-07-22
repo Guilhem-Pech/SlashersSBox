@@ -180,7 +180,10 @@ public class HfsmBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
     
     public void AddState(TName name, TName parentName, Action? onEnterAction = null, Action? onUpdateAction = null, Action? onExitAction = null)
     {
-        Debug.Assert(!m_states.ContainsKey(name), $"State already defined {name}");
+        if ( m_states.ContainsKey( name ) )
+        {
+	        throw new ArgumentException( $"State already defined {name}" );
+        }
         
         m_stateParents.Add(name, parentName);
         m_states.Add(name, new State<TName, TEvent>(name, onEnterAction, onUpdateAction, onExitAction));
@@ -248,7 +251,7 @@ public class HfsmBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 }
-public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
+public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum 
 {
     private State<TName, TEvent> m_initialState;
     private State<TName, TEvent>? m_currentState;
@@ -350,3 +353,4 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         Stop();
     }
 }
+

@@ -13,9 +13,15 @@ public class GameFlowModule : AGameModule
 		base.OnActivate();
 	}
 
+	[GameEvent.Tick]
+	private void OnUpdate()
+	{
+		m_hfsm.Update();
+	}
+
 	protected override void OnDeactivate()
 	{
-		base.OnDeactivate();
+		m_hfsm.Stop();
 	}
 
 
@@ -66,8 +72,6 @@ public class GameFlowModule : AGameModule
 		}
 		m_hfsm = builder.Build();
 	}
-	
-	
 }
 
 enum States
