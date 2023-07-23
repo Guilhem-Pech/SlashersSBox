@@ -35,15 +35,15 @@ public class GameFlowModule : AGameModule
 		
 		builder.AddState( States.WaitForPlayers );
 		{
-			builder.AddTransition( States.WaitForPlayers, States.InGame, TransitionEvents.Trigger );
+			builder.AddTransition( States.WaitForPlayers, States.InGame );
 		}
-		builder.AddState( States.InGame , OnEnterGame);
+		builder.AddState( States.InGame );
 		{
 			builder.AddState( States.PrepareObjectives, States.InGame );
 			{
-				builder.AddTransition( States.PrepareObjectives, States.SpawnPlayers, TransitionEvents.Trigger );
+				builder.AddTransition( States.PrepareObjectives, States.SpawnPlayers );
 			}
-			builder.AddState( States.SpawnPlayers, States.InGame );
+			builder.AddState( States.SpawnPlayers, States.InGame, OnEnterSpawnPlayers );
 			{
 				builder.AddTransition( States.SpawnPlayers, States.Gameplay, TransitionEvents.Trigger );
 			}
@@ -78,7 +78,7 @@ public class GameFlowModule : AGameModule
 		m_hfsm.EnableDebugLog = Enabled;
 	}
 
-	private void OnEnterGame()
+	private void OnEnterSpawnPlayers()
 	{
 		if ( !Game.IsServer )
 			return;
@@ -91,12 +91,10 @@ public class GameFlowModule : AGameModule
 		int i = 0;
 		foreach (IClient client in Game.Clients)
 		{
-				
 			var pawn = new Pawn();
 			client.Pawn = pawn;
 			pawn.Respawn();
 			pawn.DressFromClient( client );
-
 
 			SpawnPoint randomSpawnPoint = i < randomSpawnPoints.Count ? randomSpawnPoints[i] : null;
 			// if it exists, place the pawn there
@@ -112,6 +110,13 @@ public class GameFlowModule : AGameModule
 	}
 }
 
+
+
+
+
+/// 
+/// Game states definition
+///
 enum States
 {
 	WaitForPlayers,
