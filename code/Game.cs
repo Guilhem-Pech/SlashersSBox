@@ -1,5 +1,5 @@
 ﻿using MyGame;
-using Sandbox.Manager;
+using Sandbox.Manager.GameFlow;
 
 //
 // You don't need to put things in a namespace, but it doesn't hurt.
@@ -34,7 +34,7 @@ public partial class Slashers : Sandbox.GameManager
 	}
 
 	/// <summary>
-	/// A client has joined the server. Make them a pawn to play with
+	/// A client has joined the server.
 	/// </summary>
 	public override void ClientJoined( IClient client )
 	{
