@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Linq;
+using MyGame;
 using Sandbox.Utils;
 
 namespace Sandbox.Manager;
@@ -36,7 +37,7 @@ public class GameFlowModule : AGameModule
 		{
 			builder.AddTransition( States.WaitForPlayers, States.InGame, TransitionEvents.Trigger );
 		}
-		builder.AddState( States.InGame );
+		builder.AddState( States.InGame , OnEnterGame);
 		{
 			builder.AddState( States.PrepareObjectives, States.InGame );
 			{
@@ -75,6 +76,39 @@ public class GameFlowModule : AGameModule
 		}
 		m_hfsm = builder.Build();
 		m_hfsm.EnableDebugLog = Enabled;
+	}
+
+	private void OnEnterGame()
+	{
+		if ( !Game.IsServer )
+			return;
+
+		// Get all of the spawnpoints
+		var spawnpoints = Sandbox.Entity.All.OfType<SpawnPoint>();
+
+		// chose a random one
+		var randomSpawnPoints = spawnpoints.OrderBy( x => Guid.NewGuid() ).ToList();
+		int i = 0;
+		foreach (IClient client in Game.Clients)
+		{
+				
+			var pawn = new Pawn();
+			client.Pawn = pawn;
+			pawn.Respawn();
+			pawn.DressFromClient( client );
+
+
+			SpawnPoint randomSpawnPoint = i < randomSpawnPoints.Count ? randomSpawnPoints[i] : null;
+			// if it exists, place the pawn there
+			if ( randomSpawnPoint != null )
+			{
+				var tx = randomSpawnPoint.Transform;
+				tx.Position += Vector3.Up * 50.0f; // raise it up
+				pawn.Transform = tx;
+				++i;
+				i %= randomSpawnPoints.Count;
+			}
+		}
 	}
 }
 

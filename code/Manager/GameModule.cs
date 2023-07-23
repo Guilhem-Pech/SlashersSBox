@@ -1,6 +1,6 @@
 ﻿namespace Sandbox.Manager;
 
-public abstract class AGameModule : EntityComponent
+public abstract class AGameModule : EntityComponent<Slashers>
 {
 	
 	protected override void OnActivate()
