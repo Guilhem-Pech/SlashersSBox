@@ -61,6 +61,12 @@ public class MovementsController : EntityComponent<Pawn>
 
 		Entity.GroundEntity = groundEntity;
 	}
+	
+	[GameEvent.Client.BuildInput]
+	public void BuildInput()
+	{
+		Entity.InputDirection = Input.AnalogMove;
+	}
 
 	void DoJump()
 	{

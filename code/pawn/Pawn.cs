@@ -106,11 +106,7 @@ public partial class Pawn : AnimatedEntity
 		ActiveWeapon?.Simulate( cl );
 		EyeLocalPosition = Vector3.Up * (64f * Scale);
 	}
-
-	public override void BuildInput()
-	{
-		CameraController?.BuildInput();
-	}
+	
 	public override void FrameSimulate( IClient cl )
 	{
 		CameraController?.FrameSimulate( cl );

@@ -11,10 +11,9 @@ public class CameraController : EntityComponent<Pawn>
 		SimulateRotation();
 	}
 
+	[GameEvent.Client.BuildInput]
 	public void BuildInput()
 	{
-		Entity.InputDirection = Input.AnalogMove;
-
 		if ( Input.StopProcessing )
 			return;
 
