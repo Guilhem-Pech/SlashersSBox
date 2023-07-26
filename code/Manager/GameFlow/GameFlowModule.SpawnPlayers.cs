@@ -4,7 +4,7 @@ using MyGame;
 
 namespace Sandbox.Manager.GameFlow;
 
-public partial class GameFlowModule : AGameModule
+public partial class GameFlowModule
 {
 	private void OnEnterSpawnPlayers()
 	{
@@ -15,7 +15,7 @@ public partial class GameFlowModule : AGameModule
 		var spawnpoints = Sandbox.Entity.All.OfType<SpawnPoint>();
 
 		// chose a random one
-		var randomSpawnPoints = spawnpoints.OrderBy( x => Guid.NewGuid() ).ToList();
+		var randomSpawnPoints = spawnpoints.OrderBy( _ => Guid.NewGuid() ).ToList();
 		int i = 0;
 		foreach (IClient client in Game.Clients)
 		{
