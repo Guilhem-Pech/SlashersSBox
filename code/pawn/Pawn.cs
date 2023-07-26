@@ -1,5 +1,6 @@
 ﻿using Sandbox;
 using System.ComponentModel;
+using Sandbox.pawn.PawnControllers;
 
 namespace MyGame;
 
@@ -55,8 +56,10 @@ public partial class Pawn : AnimatedEntity
 		);
 	}
 
-	[BindComponent] public PawnController Controller { get; }
-	[BindComponent] public PawnAnimator Animator { get; }
+	[BindComponent] public MovementsController Controller { get; }
+	
+	[BindComponent] public CameraController CameraController { get; }
+	[BindComponent] public AnimatorController AnimatorController { get; }
 
 	public override Ray AimRay => new Ray( EyePosition, EyeRotation.Forward );
 
@@ -81,8 +84,9 @@ public partial class Pawn : AnimatedEntity
 
 	public void Respawn()
 	{
-		Components.Create<PawnController>();
-		Components.Create<PawnAnimator>();
+		Components.Create<MovementsController>();
+		Components.Create<AnimatorController>();
+		Components.Create<CameraController>();
 
 		SetActiveWeapon( new Pistol() );
 	}
@@ -96,72 +100,20 @@ public partial class Pawn : AnimatedEntity
 
 	public override void Simulate( IClient cl )
 	{
-		SimulateRotation();
+		CameraController?.Simulate( cl );
 		Controller?.Simulate( cl );
-		Animator?.Simulate();
+		AnimatorController?.Simulate();
 		ActiveWeapon?.Simulate( cl );
 		EyeLocalPosition = Vector3.Up * (64f * Scale);
 	}
 
 	public override void BuildInput()
 	{
-		InputDirection = Input.AnalogMove;
-
-		if ( Input.StopProcessing )
-			return;
-
-		var look = Input.AnalogLook;
-
-		if ( ViewAngles.pitch > 90f || ViewAngles.pitch < -90f )
-		{
-			look = look.WithYaw( look.yaw * -1f );
-		}
-
-		var viewAngles = ViewAngles;
-		viewAngles += look;
-		viewAngles.pitch = viewAngles.pitch.Clamp( -89f, 89f );
-		viewAngles.roll = 0f;
-		ViewAngles = viewAngles.Normal;
+		CameraController?.BuildInput();
 	}
-
-	bool IsThirdPerson { get; set; } = false;
-
 	public override void FrameSimulate( IClient cl )
 	{
-		SimulateRotation();
-
-		Camera.Rotation = ViewAngles.ToRotation();
-		Camera.FieldOfView = Screen.CreateVerticalFieldOfView( Game.Preferences.FieldOfView );
-
-		if ( Input.Pressed( "view" ) )
-		{
-			IsThirdPerson = !IsThirdPerson;
-		}
-
-		if ( IsThirdPerson )
-		{
-			Vector3 targetPos;
-			var pos = Position + Vector3.Up * 64;
-			var rot = Camera.Rotation * Rotation.FromAxis( Vector3.Up, -16 );
-
-			float distance = 80.0f * Scale;
-			targetPos = pos + rot.Right * ((CollisionBounds.Mins.x + 50) * Scale);
-			targetPos += rot.Forward * -distance;
-
-			var tr = Trace.Ray( pos, targetPos )
-				.WithAnyTags( "solid" )
-				.Ignore( this )
-				.Radius( 8 )
-				.Run();
-			
-			Camera.FirstPersonViewer = null;
-			Camera.Position = tr.EndPosition;
-		}
-		else
-		{
-			Camera.FirstPersonViewer = this;
-			Camera.Position = EyePosition;
-		}
+		CameraController?.FrameSimulate( cl );
 	}
 
 	public TraceResult TraceBBox( Vector3 start, Vector3 end, float liftFeet = 0.0f )
@@ -184,11 +136,5 @@ public partial class Pawn : AnimatedEntity
 					.Run();
 
 		return tr;
-	}
-
-	protected void SimulateRotation()
-	{
-		EyeRotation = ViewAngles.ToRotation();
-		Rotation = ViewAngles.WithPitch( 0f ).ToRotation();
 	}
 }

@@ -1,9 +1,8 @@
-﻿using Sandbox;
-using System;
+﻿using MyGame;
 
-namespace MyGame;
+namespace Sandbox.pawn.PawnControllers;
 
-public class PawnAnimator : EntityComponent<Pawn>, ISingletonComponent
+public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent
 {
 	public void Simulate()
 	{

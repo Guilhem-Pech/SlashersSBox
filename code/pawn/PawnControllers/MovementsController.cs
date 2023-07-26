@@ -1,10 +1,10 @@
-﻿using Sandbox;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using MyGame;
 
-namespace MyGame;
+namespace Sandbox.pawn.PawnControllers;
 
-public class PawnController : EntityComponent<Pawn>
+public class MovementsController : EntityComponent<Pawn>
 {
 	public int StepSize => 24;
 	public int GroundAngle => 45;
