@@ -2,7 +2,7 @@
 
 namespace Sandbox.Manager.GameFlow;
 
-public partial class GameFlowModule : AGameModule
+public partial class GameFlowModule
 {
 	private HFSM<States, TransitionEvents> m_hfsm;
 
@@ -39,7 +39,7 @@ public partial class GameFlowModule : AGameModule
 			{
 				builder.AddTransition( States.PrepareObjectives, States.SpawnPlayers );
 			}
-			builder.AddState( States.SpawnPlayers, States.InGame, OnEnterSpawnPlayers );
+			builder.AddState( States.SpawnPlayers, States.InGame, onEnterAction: OnEnterSpawnPlayers, onExitAction: OnExitSpawnPlayers );
 			{
 				builder.AddTransition( States.SpawnPlayers, States.Gameplay, TransitionEvents.Trigger );
 			}

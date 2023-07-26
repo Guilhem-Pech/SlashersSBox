@@ -102,7 +102,7 @@ public partial class Pawn : AnimatedEntity
 	{
 		CameraController?.Simulate( cl );
 		Controller?.Simulate( cl );
-		AnimatorController?.Simulate();
+		AnimatorController?.Simulate(cl);
 		ActiveWeapon?.Simulate( cl );
 		EyeLocalPosition = Vector3.Up * (64f * Scale);
 	}

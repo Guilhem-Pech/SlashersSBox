@@ -4,7 +4,7 @@ namespace Sandbox.pawn.PawnControllers;
 
 public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent
 {
-	public void Simulate()
+	public void Simulate( IClient client )
 	{
 		var helper = new CitizenAnimationHelper( Entity );
 		helper.WithVelocity( Entity.Velocity );
@@ -12,7 +12,7 @@ public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent
 		helper.HoldType = CitizenAnimationHelper.HoldTypes.None;
 		helper.IsGrounded = Entity.GroundEntity.IsValid();
 
-		if ( Entity.Controller.HasEvent( "jump" ) )
+		if (Entity.Controller?.HasEvent( "jump" ) == true )
 		{
 			helper.TriggerJump();
 		}
