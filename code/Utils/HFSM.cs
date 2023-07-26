@@ -120,7 +120,7 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     }
 }
 
-public class HfsmBuilder<TName, TEvent> where TEvent : struct, Enum where TName : Enum
+public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName : Enum
 {
     private readonly Dictionary<TName, State<TName, TEvent>> m_states = new();
     private readonly List<TransitionInfo> m_transitionInfos = new();

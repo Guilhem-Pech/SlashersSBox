@@ -27,7 +27,7 @@ public partial class GameFlowModule
 
 	private void BuildHFSM()
 	{
-		HfsmBuilder<States, TransitionEvents> builder = new HfsmBuilder<States, TransitionEvents>();
+		HFSMBuilder<States, TransitionEvents> builder = new HFSMBuilder<States, TransitionEvents>();
 		
 		builder.AddState( States.WaitForPlayers );
 		{
