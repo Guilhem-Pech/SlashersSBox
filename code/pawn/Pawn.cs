@@ -62,6 +62,8 @@ public partial class Pawn : AnimatedEntity
 	[BindComponent] public AnimatorController AnimatorController { get; }
 
 	public override Ray AimRay => new Ray( EyePosition, EyeRotation.Forward );
+	
+	private float m_timeStampLastFootStep = 0f;
 
 	/// <summary>
 	/// Called when the entity is first created 
@@ -132,5 +134,21 @@ public partial class Pawn : AnimatedEntity
 					.Run();
 
 		return tr;
+	}
+
+	public override void OnAnimEventFootstep( Vector3 position, int foot, float volume )
+	{
+		if(Game.IsServer || Time.Now - m_timeStampLastFootStep < 0.2f )
+			return;
+		
+		var trace = Trace.Ray( position, position + Vector3.Down * 10f )
+			.Ignore( this )
+			.Run();
+		
+		if ( !trace.Hit ) return;
+		
+		trace.Surface.DoFootstep( this, trace, foot, volume );
+		
+		m_timeStampLastFootStep = Time.Now;
 	}
 }
