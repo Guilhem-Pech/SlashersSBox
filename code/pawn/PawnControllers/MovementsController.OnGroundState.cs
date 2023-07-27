@@ -4,6 +4,7 @@ namespace Sandbox.pawn.PawnControllers;
 
 public partial class MovementsController
 {
+	private float m_desiredSpeed = 0f;
 	private void OnEnterGroundState()
 	{
 		Entity.Velocity = Entity.Velocity.WithZ( 0 );
@@ -14,10 +15,10 @@ public partial class MovementsController
 	{
 		var movement = Entity.InputDirection.Normal;
 		var angles = Entity.ViewAngles.WithPitch( 0 );
-		var moveVector = Rotation.From( angles ) * movement * 320f;
+		var moveVector = Rotation.From( angles ) * movement * m_desiredSpeed;
 		var groundEntity = CheckForGround();
 		
-		Entity.Velocity = Accelerate( Entity.Velocity, moveVector.Normal, moveVector.Length, 200.0f * ( Input.Down( "run" ) ? 2.5f : 1f ), 7.5f );
+		Entity.Velocity = Accelerate( Entity.Velocity, moveVector.Normal, moveVector.Length, 800f, 7.5f );
 		Entity.Velocity = ApplyFriction( Entity.Velocity, 4.0f );
 
 		if ( Input.Pressed( "jump" ) )
@@ -120,5 +121,18 @@ public partial class MovementsController
 	}
 	private void OnExitGroundState()
 	{
+	}
+
+	// Jog state
+	private void OnEnterJogState()
+	{
+		m_desiredSpeed = JogSpeed;
+	}
+	
+	
+	//Sprint state
+	private void OnEnterSprintState()
+	{
+		m_desiredSpeed = SprintSpeed;
 	}
 }

@@ -12,6 +12,14 @@ public partial class MovementsController
 		HFSMBuilder<States, TransitionEvents> builder = new HFSMBuilder<States, TransitionEvents>();
 		builder.AddState( States.OnGroundState , OnEnterGroundState, OnUpdateGroundState, OnExitGroundState);
 		{
+			builder.AddState( States.JogState ,States.OnGroundState, OnEnterJogState);
+			{
+				builder.AddTransition( States.JogState, States.RunState , () => Input.Down( "run" ));
+			}
+			builder.AddState( States.RunState ,States.OnGroundState, OnEnterSprintState);
+			{
+				builder.AddTransition( States.RunState, States.JogState , () => !Input.Down( "run" ));
+			}
 			builder.AddTransition( States.OnGroundState, States.InAirState , () => !Grounded);
 		}
 		builder.AddState( States.InAirState , OnEnterAirState, OnUpdateAirState, OnExitAirState);
@@ -25,7 +33,9 @@ public partial class MovementsController
 enum States
 {
 	OnGroundState,
-	InAirState
+	JogState,
+	RunState,
+	InAirState,
 }
 
 enum TransitionEvents

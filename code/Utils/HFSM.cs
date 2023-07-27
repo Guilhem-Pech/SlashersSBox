@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Sandbox.Utils;
 
@@ -258,8 +259,21 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     private Queue<TEvent?> m_eventToTreat = new();
     public bool EnableDebugLog { set; get; } = false;
     
-    public string GetDebugCurrentStateName() => m_currentState?.Name.ToString() ?? "No active current state";
-    
+    public string GetDebugCurrentStateName()
+    {
+	    StringBuilder stateNamesBuilder = new StringBuilder();
+
+	    foreach (var state in GetActiveStatesHierarchy())
+	    {
+		    stateNamesBuilder.Append('.');
+		    stateNamesBuilder.Append(state.Name);
+	    }
+ 
+	    string names = stateNamesBuilder.ToString();
+
+	    return names.StartsWith(".") ? names.TrimStart('.') : names;
+    }
+
     public HFSM(State<TName, TEvent> initial)
     {
         m_initialState = initial;

@@ -6,6 +6,8 @@ namespace Sandbox.pawn.PawnControllers;
 
 public partial class MovementsController : EntityComponent<Pawn>
 {
+	public float JogSpeed { get; set; } = 150f;
+	public float SprintSpeed { get; set; } = 275f;
 	public int StepSize => 24;
 	public int GroundAngle => 45;
 	public int JumpSpeed => 300;
