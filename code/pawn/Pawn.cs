@@ -78,6 +78,10 @@ public partial class Pawn : AnimatedEntity
 		EnableDrawing = true;
 		EnableHideInFirstPerson = true;
 		EnableShadowInFirstPerson = true;
+		
+		Components.GetOrCreate<MovementsController>();
+		Components.GetOrCreate<AnimatorController>();
+		Components.GetOrCreate<CameraController>();
 	}
 
 	public void SetActiveWeapon( Weapon weapon )
@@ -89,10 +93,6 @@ public partial class Pawn : AnimatedEntity
 
 	public void Respawn()
 	{
-		Components.Create<MovementsController>();
-		Components.Create<AnimatorController>();
-		Components.Create<CameraController>();
-
 		SetActiveWeapon( new Pistol() );
 	}
 

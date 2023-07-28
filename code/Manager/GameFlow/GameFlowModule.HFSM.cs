@@ -71,7 +71,6 @@ public partial class GameFlowModule
 			}
 		}
 		m_hfsm = builder.Build();
-		m_hfsm.EnableDebugLog = Enabled;
 	}
 }
 

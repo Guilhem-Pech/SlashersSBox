@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Sandbox.Diagnostics;
 
 namespace Sandbox.Utils
 {
@@ -10,12 +11,14 @@ namespace Sandbox.Utils
     public class EventDispatcher
     {
 	    private readonly ConcurrentDictionary<Type, List<(WeakReference<IEventListener> listener, Action<Event> callback)>> listeners = new();
+	    
 	    private readonly object m_syncLock = new object();
 	    
 	    
 		public void RegisterEvent<T>(IEventListener listener, Action<T> callback) where T : Event
 		{ 
 			var eventType = typeof(T);
+
 			lock ( m_syncLock )
 			{
 				listeners.AddOrUpdate( eventType,
@@ -30,8 +33,6 @@ namespace Sandbox.Utils
 					} );
 			}
 		}
-		
-
 
 		public void UnregisterEvent<T>(IEventListener listenerToUnregister) where T : Event
 		{
@@ -56,7 +57,7 @@ namespace Sandbox.Utils
 				var keysToRemove = new List<Type>();
 				foreach (var key in listeners.Keys)
 				{
-					if (listeners.TryGetValue(key, out var existingList))
+					if (listeners.TryGetValue(key, out var existingList)) 
 					{
 						existingList.RemoveAll(x => x.listener.TryGetTarget(out var listener) && listener == eventListener);
 						if (existingList.Count == 0)

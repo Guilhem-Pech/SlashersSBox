@@ -15,10 +15,16 @@ public partial class MovementsController
 			builder.AddState( States.JogState ,States.OnGroundState, OnEnterJogState);
 			{
 				builder.AddTransition( States.JogState, States.RunState , () => Input.Down( "run" ));
+				builder.AddTransition( States.JogState, States.WalkState , () => Input.Down( "walk" ));
 			}
 			builder.AddState( States.RunState ,States.OnGroundState, OnEnterSprintState);
 			{
 				builder.AddTransition( States.RunState, States.JogState , () => !Input.Down( "run" ));
+				builder.AddTransition( States.RunState, States.WalkState , () => Input.Down( "walk" ));
+			}
+			builder.AddState( States.WalkState ,States.OnGroundState, OnEnterWalkState);
+			{
+				builder.AddTransition( States.WalkState, States.JogState , () => !Input.Down( "walk" ));
 			}
 			builder.AddTransition( States.OnGroundState, States.InAirState , () => !Grounded);
 		}
@@ -36,6 +42,7 @@ enum States
 	JogState,
 	RunState,
 	InAirState,
+	WalkState
 }
 
 enum TransitionEvents

@@ -39,6 +39,18 @@ public class Transition<TEvent> where TEvent: struct, Enum
     {
         return m_to;
     }
+    public override string ToString()
+    {
+	    StringBuilder builder = new StringBuilder();
+
+	    builder.Append( $"To: {m_to} " );
+	    if ( m_event.HasValue )
+	    {
+		    builder.Append( $"Event: {m_event} " );
+	    }
+	    builder.Append( $"Guard Result: {m_guard()} " ); // Don't really know yet how we can have a more meaningful debug info about the guard
+	    return builder.ToString();
+    }
 }
 public class State<TName, TEvent> : IState where TEvent: struct, Enum where TName: Enum
 {
@@ -83,12 +95,16 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     {
         m_transitions.Add(transition);
     }
-    public State<TName, TEvent>? CheckTransitions(TEvent? fsmEvent)
+    public State<TName, TEvent>? CheckTransitions(TEvent? fsmEvent, out Transition<TEvent>? matchedTransition )
     {
+	    matchedTransition = null;
         foreach (Transition<TEvent> transition in m_transitions)
         {
 	        if ( transition.MatchConditions( fsmEvent ) )
+	        {
+		        matchedTransition = transition;
 		        return transition.Destination() as State<TName, TEvent>;
+	        }
         }
         return null;
     }
@@ -117,7 +133,7 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
 
     public override string ToString()
     {
-	    return Name.ToString();
+	    return $"[{Name}]";
     }
 }
 
@@ -247,7 +263,6 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
                 from.AddTransition(new Transition<TEvent>(to));
             }
         }
-		Log.Info( $"[HFSM] HFSM Built with initial state: {initial}" );
         return new HFSM<TName, TEvent>(initial ?? throw new InvalidOperationException("No root state detected !"));
     }
 }
@@ -257,7 +272,18 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
     private State<TName, TEvent>? m_currentState;
 
     private Queue<TEvent?> m_eventToTreat = new();
+    
     public bool EnableDebugLog { set; get; } = false;
+    
+    private Transition<TEvent>? m_lastTransition;
+
+    private void LogTransition(State<TName, TEvent>? oldState, State<TName, TEvent>? newState)
+    {
+	    if (EnableDebugLog)
+	    {
+		    Log.Info($"[HFSM] Transition: {oldState} -> {newState}, Reason: {m_lastTransition}");
+	    }
+    }
     
     public string GetDebugCurrentStateName()
     {
@@ -323,10 +349,10 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         
         foreach (State<TName, TEvent> state in GetActiveStatesHierarchy())
         {
-            State<TName, TEvent>? destinationState = state.CheckTransitions(receivedEvent);
+            State<TName, TEvent>? destinationState = state.CheckTransitions(receivedEvent, out m_lastTransition);
             if (destinationState != null)
             {
-                ChangeActiveState(destinationState);
+	            ChangeActiveState(destinationState);
                 break;
             }
             state.OnUpdate();
@@ -348,29 +374,28 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
         List<State<TName, TEvent>> exitingStates = activeStatesHierarchy.Except(futureStatesHierarchy).ToList();
         for (int index = exitingStates.Count - 1; index >= 0; --index)
         {
-	        if(EnableDebugLog)
-		        Log.Info( $"[HFSM] Exiting {exitingStates[index].Name}" );
             exitingStates[index].OnExit();
         }
         
+        LogTransition( m_currentState, newState );
         m_currentState = nextState;
         
         List<State<TName, TEvent>> enteringStates = futureStatesHierarchy.Except(activeStatesHierarchy).ToList();
         foreach (State<TName, TEvent> state in enteringStates)
         {
-	        if(EnableDebugLog)
-		        Log.Info( $"[HFSM] Entering {state.Name}" );
             state.OnEnter();
         }
     }
     public void Stop()
     {
+	    m_lastTransition = null;
         ChangeActiveState(null);
     }
     
     ~HFSM()
     {
-        Stop();
+	    if(m_currentState != null)
+			Stop();
     }
 }
 

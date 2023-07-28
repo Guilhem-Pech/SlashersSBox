@@ -143,4 +143,10 @@ public partial class MovementsController
 	{
 		m_desiredSpeed = SprintSpeed;
 	}
+
+	//Sprint state
+	private void OnEnterWalkState()
+	{
+		m_desiredSpeed = WalkSpeed; 
+	}
 }

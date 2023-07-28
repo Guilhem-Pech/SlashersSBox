@@ -8,6 +8,10 @@ public partial class MovementsController : EntityComponent<Pawn>
 {
 	public float JogSpeed { get; set; } = 150f;
 	public float SprintSpeed { get; set; } = 275f;
+	public float WalkSpeed { get; set; } = 80f;
+	 
+	public float DuckSpeed { get; set; } = 80f;
+	
 	public int StepSize => 24;
 	public int GroundAngle => 45;
 	public int JumpSpeed => 300;
@@ -30,9 +34,9 @@ public partial class MovementsController : EntityComponent<Pawn>
 
 	public void Simulate( IClient cl )
 	{
+		m_hfsm.Update();
 		if(CheckStuckAndFix())
 			return;
-		m_hfsm.Update();
 	}
 	
 	[GameEvent.Client.BuildInput]
@@ -60,6 +64,8 @@ public partial class MovementsController : EntityComponent<Pawn>
 	
 	private bool CheckStuckAndFix()
 	{
+		if ( Game.IsClient ) return true;
+
 		var result = Entity.TraceBBox( Entity.Position, Entity.Position );
 
 		if ( !result.StartedSolid )
@@ -67,12 +73,8 @@ public partial class MovementsController : EntityComponent<Pawn>
 			StuckTries = 0;
 			return false;
 		}
-
-		if ( Game.IsClient ) return true;
-
 		
-
-		for ( int i = 0; i < AttemptsPerTick; i++ )
+		for ( int i = 0; i < AttemptsPerTick; ++i )
 		{
 			var pos = Entity.Position + Vector3.Random.Normal * (StuckTries / 2.0f);
 
