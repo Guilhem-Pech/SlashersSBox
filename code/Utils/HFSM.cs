@@ -377,7 +377,7 @@ public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum
             exitingStates[index].OnExit();
         }
         
-        LogTransition( m_currentState, newState );
+        LogTransition( m_currentState, nextState );
         m_currentState = nextState;
         
         List<State<TName, TEvent>> enteringStates = futureStatesHierarchy.Except(activeStatesHierarchy).ToList();
