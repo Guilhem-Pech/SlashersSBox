@@ -50,7 +50,7 @@ public partial class Pawn : AnimatedEntity
 	[Net, Predicted, Browsable( false )]
 	public Rotation EyeLocalRotation { get; set; }
 
-	public BBox Hull
+	public BBox DefaultHull
 	{
 		get => new
 		(
@@ -58,6 +58,17 @@ public partial class Pawn : AnimatedEntity
 			new Vector3( 16, 16, 64 )
 		);
 	}
+
+	public BBox DuckHull
+	{
+		get => new
+		(
+			new Vector3( -16, -16, 0 ),
+			new Vector3( 16, 16, 40f )
+		);
+	}
+	
+	public BBox Hull { set; get; }
 
 	[BindComponent] public MovementsController Controller { get; }
 	
@@ -93,6 +104,7 @@ public partial class Pawn : AnimatedEntity
 
 	public void Respawn()
 	{
+		Hull = DefaultHull;
 		SetActiveWeapon( new Pistol() );
 	}
 
@@ -109,7 +121,7 @@ public partial class Pawn : AnimatedEntity
 		Controller?.Simulate( cl );
 		AnimatorController?.Simulate(cl);
 		ActiveWeapon?.Simulate( cl );
-		EyeLocalPosition = Vector3.Up * (64f * Scale);
+		EyeLocalPosition = Vector3.Up * (Hull.Maxs.z * Scale);
 	}
 	
 	public override void FrameSimulate( IClient cl )
