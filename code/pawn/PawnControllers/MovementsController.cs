@@ -12,8 +12,8 @@ public partial class MovementsController : EntityComponent<Pawn>
 	public int GroundAngle => 45;
 	public int JumpSpeed => 300;
 	public float Gravity => 800f;
-
-	HashSet<string> ControllerEvents = new( StringComparer.OrdinalIgnoreCase );
+	private int StuckTries { get; set; } = 0;
+	private int AttemptsPerTick { get; } = 20;
 
 	bool Grounded => Entity.GroundEntity.IsValid();
 
@@ -30,7 +30,8 @@ public partial class MovementsController : EntityComponent<Pawn>
 
 	public void Simulate( IClient cl )
 	{
-		ControllerEvents.Clear();
+		if(CheckStuckAndFix())
+			return;
 		m_hfsm.Update();
 	}
 	
@@ -55,17 +56,40 @@ public partial class MovementsController : EntityComponent<Pawn>
 
 		return trace.Entity;
 	}
-
-	public bool HasEvent( string eventName )
+	
+	private bool CheckStuckAndFix()
 	{
-		return ControllerEvents.Contains( eventName );
-	}
+		var result = Entity.TraceBBox( Entity.Position, Entity.Position );
 
-	void AddEvent( string eventName )
-	{
-		if ( HasEvent( eventName ) )
-			return;
+		if ( !result.StartedSolid )
+		{
+			StuckTries = 0;
+			return false;
+		}
 
-		ControllerEvents.Add( eventName );
+		if ( Game.IsClient ) return true;
+
+		
+
+		for ( int i = 0; i < AttemptsPerTick; i++ )
+		{
+			var pos = Entity.Position + Vector3.Random.Normal * (StuckTries / 2.0f);
+
+			if ( i == 0 )
+			{
+				pos = Entity.Position + Vector3.Up * 5;
+			}
+
+			result = Entity.TraceBBox( pos, pos );
+
+			if ( !result.StartedSolid )
+			{
+				Entity.Position = pos;
+				return false;
+			}
+		}
+
+		++StuckTries;
+		return true;
 	}
 }

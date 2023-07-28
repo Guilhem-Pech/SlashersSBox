@@ -1,6 +1,7 @@
 ﻿using Sandbox;
 using System.ComponentModel;
 using Sandbox.pawn.PawnControllers;
+using Sandbox.Utils;
 
 namespace MyGame;
 
@@ -15,6 +16,8 @@ public partial class Pawn : AnimatedEntity
 	[ClientInput]
 	public Angles ViewAngles { get; set; }
 
+	public EventDispatcher EventDispatcher { get; } = new();
+	
 	/// <summary>
 	/// Position a player should be looking from in world space.
 	/// </summary>

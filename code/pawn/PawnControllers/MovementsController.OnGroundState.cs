@@ -2,13 +2,19 @@
 
 namespace Sandbox.pawn.PawnControllers;
 
+public class EventOnJump : Utils.Event
+{}
+
+public class EventOnGrounded : Utils.Event
+{}
+
 public partial class MovementsController
 {
 	private float m_desiredSpeed = 0f;
 	private void OnEnterGroundState()
 	{
 		Entity.Velocity = Entity.Velocity.WithZ( 0 );
-		AddEvent( "grounded" );
+		Entity.EventDispatcher.SendEvent<EventOnGrounded>();
 	}
 
 	private void OnUpdateGroundState()
@@ -111,7 +117,7 @@ public partial class MovementsController
 		if ( Grounded )
 		{
 			Entity.Velocity = ApplyJump( Entity.Velocity );
-			AddEvent( "jump" );
+			Entity.EventDispatcher.SendEvent<EventOnJump>();
 		}
 	}
 	
