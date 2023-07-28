@@ -158,6 +158,8 @@ public partial class MovementsController
 	}
 	
 	//Duck state
+	private CoroutineEnumerator m_duckCoroutine;
+
 	private void OnEnterDuckState()
 	{
 		m_desiredSpeed = DuckSpeed;
@@ -167,8 +169,6 @@ public partial class MovementsController
 		m_duckCoroutine = ResizeDuckHull( Entity.DuckHull );
 		Coroutine.Start( m_duckCoroutine);
 	}
-
-	private CoroutineEnumerator m_duckCoroutine;
 	
 	CoroutineEnumerator ResizeDuckHull(BBox to)
 	{
