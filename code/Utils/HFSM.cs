@@ -188,13 +188,14 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         }
     }
     
-    public void AddState(TName name, Action? onEnterAction = null, Action? onUpdateAction = null, Action? onExitAction = null)
+    public HFSMBuilder<TName, TEvent> AddState(TName name, Action? onEnterAction = null, Action? onUpdateAction = null, Action? onExitAction = null)
     {
         m_stateParents.Add(name, name);
         m_states.Add(name, new State<TName, TEvent>(name, onEnterAction, onUpdateAction, onExitAction));
+        return this;
     }
     
-    public void AddState(TName name, TName parentName, Action? onEnterAction = null, Action? onUpdateAction = null, Action? onExitAction = null)
+    public HFSMBuilder<TName, TEvent> AddState(TName name, TName parentName, Action? onEnterAction = null, Action? onUpdateAction = null, Action? onExitAction = null)
     {
         if ( m_states.ContainsKey( name ) )
         {
@@ -203,26 +204,30 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         
         m_stateParents.Add(name, parentName);
         m_states.Add(name, new State<TName, TEvent>(name, onEnterAction, onUpdateAction, onExitAction));
+        return this;
     }
     
-    public void AddTransition(TName from, TName to)
+    public HFSMBuilder<TName, TEvent> AddTransition(TName from, TName to)
     {
         m_transitionInfos.Add(new TransitionInfo(from, to));
+        return this;
     }
-    public void AddTransition(TName from, TName to, TEvent @event)
+    public HFSMBuilder<TName, TEvent> AddTransition(TName from, TName to, TEvent @event)
     {
         m_transitionInfos.Add(new TransitionInfo(from, to, @event));
+        return this;
     }
     
-    public void AddTransition(TName from, TName to, Func<bool> guard)
+    public HFSMBuilder<TName, TEvent> AddTransition(TName from, TName to, Func<bool> guard)
     {
         m_transitionInfos.Add(new TransitionInfo(from, to, guard));
+        return this;
     }
     
-    public void AddTransition(TName from, TName to, Func<bool> guard, TEvent @event)
+    public HFSMBuilder<TName, TEvent> AddTransition(TName from, TName to, Func<bool> guard, TEvent @event)
     {
         m_transitionInfos.Add(new TransitionInfo(from, to, guard, @event));
-
+        return this;
     }
 
     public HFSM<TName, TEvent> Build()
