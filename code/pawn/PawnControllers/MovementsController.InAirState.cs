@@ -19,6 +19,10 @@ public partial class MovementsController
 		var mh = new MoveHelper( Entity.Position, Entity.Velocity );
 		mh.Trace = mh.Trace.Size( Entity.Hull ).Ignore( Entity );
 
+		if ( mh.TryUnstuck() )
+		{
+			Entity.Position = mh.Position;
+		}
 		if ( mh.TryMoveWithStep( Time.Delta, StepSize ) > 0 )
 		{
 			if ( Grounded )
