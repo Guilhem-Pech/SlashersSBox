@@ -37,6 +37,7 @@ public partial class MovementsController
 		}
 		builder.AddState( States.InAirState , OnEnterAirState, OnUpdateAirState, OnExitAirState);
 		{
+			builder.AddTransition( States.InAirState, States.DuckState , () => Input.Down( "duck" ) && Grounded ); 
 			builder.AddTransition( States.InAirState, States.OnGroundState , () => Grounded );
 		}
 		m_hfsm = builder.Build();
@@ -50,7 +51,7 @@ enum States
 	RunState,
 	InAirState,
 	WalkState,
-	DuckState
+	DuckState,
 }
 
 enum TransitionEvents

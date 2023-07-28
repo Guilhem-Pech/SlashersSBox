@@ -162,6 +162,7 @@ public partial class MovementsController
 	{
 		m_desiredSpeed = DuckSpeed;
 		Entity.EventDispatcher.SendEvent<EventOnDuck>();
+		
 		Coroutine.Stop( m_duckCoroutine );
 		m_duckCoroutine = ResizeDuckHull( Entity.DuckHull );
 		Coroutine.Start( m_duckCoroutine);
@@ -179,7 +180,7 @@ public partial class MovementsController
 			Entity.Hull = curHull.Lerp( to, duckLerp += (Time.Delta * 10f) );
 			yield return new WaitForNextTick();
 		}
-		Entity.Hull = to;
+		Entity.Hull = to; 
 	}
 	
 	private void OnExitDuckState()
