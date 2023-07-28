@@ -1,4 +1,8 @@
 ﻿using System;
+using Coroutines;
+using Coroutines.Stallers;
+using Sandbox.Utils;
+using CoroutineEnumerator = System.Collections.Generic.IEnumerator<Coroutines.ICoroutineStaller>;
 
 namespace Sandbox.pawn.PawnControllers;
 
@@ -6,6 +10,12 @@ public class EventOnJump : Utils.Event
 {}
 
 public class EventOnGrounded : Utils.Event
+{}
+
+class EventOnDuck : Utils.Event
+{}
+
+class EventOnUnDuck : Utils.Event
 {}
 
 public partial class MovementsController
@@ -29,7 +39,7 @@ public partial class MovementsController
 		Entity.Velocity = Accelerate( Entity.Velocity, moveVector.Normal, moveVector.Length, 800f, 7.5f );
 		Entity.Velocity = ApplyFriction( Entity.Velocity, 4.0f );
 
-		if ( Input.Pressed( "jump" ) )
+		if ( Input.Pressed( "jump" ) && CanJump())
 		{
 			DoJump();
 		}
@@ -116,11 +126,8 @@ public partial class MovementsController
 	
 	void DoJump()
 	{
-		if ( Grounded )
-		{
-			Entity.Velocity = ApplyJump( Entity.Velocity );
-			Entity.EventDispatcher.SendEvent<EventOnJump>();
-		}
+		Entity.Velocity = ApplyJump( Entity.Velocity );
+		Entity.EventDispatcher.SendEvent<EventOnJump>();
 	}
 	
 	Vector3 ApplyJump( Vector3 input )
@@ -144,9 +151,44 @@ public partial class MovementsController
 		m_desiredSpeed = SprintSpeed;
 	}
 
-	//Sprint state
+	//Walk state
 	private void OnEnterWalkState()
 	{
 		m_desiredSpeed = WalkSpeed; 
 	}
+	
+	//Duck state
+	private void OnEnterDuckState()
+	{
+		m_desiredSpeed = DuckSpeed;
+		Entity.EventDispatcher.SendEvent<EventOnDuck>();
+		Coroutine.Stop( m_duckCoroutine );
+		m_duckCoroutine = ResizeDuckHull( Entity.DuckHull );
+		Coroutine.Start( m_duckCoroutine);
+	}
+
+	private CoroutineEnumerator m_duckCoroutine;
+	
+	CoroutineEnumerator ResizeDuckHull(BBox to)
+	{
+		var curHull = Entity.Hull;
+		float duckLerp = 0f;
+		
+		while ( !Entity.Hull.Size.AlmostEqual( to.Size ) )
+		{
+			Entity.Hull = curHull.Lerp( to, duckLerp += (Time.Delta * 10f) );
+			yield return new WaitForNextTick();
+		}
+	}
+	
+	private void OnExitDuckState()
+	{
+		Coroutine.Stop( m_duckCoroutine );
+		m_duckCoroutine = ResizeDuckHull( Entity.DefaultHull );
+		Coroutine.Start( m_duckCoroutine);
+		
+		Entity.EventDispatcher.SendEvent<EventOnUnDuck>();
+	}
 }
+
+

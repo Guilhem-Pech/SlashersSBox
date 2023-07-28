@@ -7,17 +7,32 @@ namespace Sandbox.pawn.PawnControllers;
 
 public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IEventListener
 {
+	private CitizenAnimationHelper m_helper;
+
+	private int m_duckLevel = 0;
 	
-	HashSet<string> AnimationEvents = new( StringComparer.OrdinalIgnoreCase );
 	protected override void OnActivate()
 	{
+		m_helper = new CitizenAnimationHelper( Entity );
 		Entity.EventDispatcher.RegisterEvent<EventOnJump>( this, OnPawnJumped );
+		Entity.EventDispatcher.RegisterEvent<EventOnDuck>( this, OnPawnDuck );
+		Entity.EventDispatcher.RegisterEvent<EventOnUnDuck>( this, OnPawnUnduck );
 		base.OnActivate();
 	}
+ 
+	private void OnPawnDuck( EventOnDuck obj )
+	{
+		m_duckLevel = 1;
+	}
+	
+	private void OnPawnUnduck( EventOnUnDuck obj )
+	{
+		m_duckLevel = 0;
+	} 
 
 	private void OnPawnJumped( EventOnJump obj )
 	{
-		AnimationEvents.Add( "jump" );
+		m_helper.TriggerJump();
 	}
 
 	protected override void OnDeactivate()
@@ -28,15 +43,10 @@ public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IE
 
 	public void Simulate( IClient client )
 	{
-		var helper = new CitizenAnimationHelper( Entity );
-		helper.WithVelocity( Entity.Velocity );
-		helper.WithLookAt( Entity.EyePosition + Entity.EyeRotation.Forward * 100 );
-		helper.HoldType = CitizenAnimationHelper.HoldTypes.None;
-		helper.IsGrounded = Entity.GroundEntity.IsValid();
-
-		if ( AnimationEvents.Remove( "jump" ) )
-		{
-			helper.TriggerJump();
-		}
+		m_helper.WithVelocity( Entity.Velocity );
+		m_helper.WithLookAt( Entity.EyePosition + Entity.EyeRotation.Forward * 100 );
+		m_helper.HoldType = CitizenAnimationHelper.HoldTypes.None;
+		m_helper.IsGrounded = Entity.GroundEntity.IsValid();
+		m_helper.DuckLevel = m_duckLevel;
 	}
 }

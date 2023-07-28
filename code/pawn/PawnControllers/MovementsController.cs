@@ -95,4 +95,20 @@ public partial class MovementsController : EntityComponent<Pawn>
 		++StuckTries;
 		return true;
 	}
+	
+	bool CanUnduck()
+	{
+		var hit = Entity.TraceBBox( Entity.Position, Entity.Position , Entity.DefaultHull.Mins, Entity.DefaultHull.Maxs);
+		return !hit.StartedSolid; 
+	}
+
+	bool CanJump()
+	{
+		if ( Grounded )
+		{
+			var hit = Entity.TraceBBox( Entity.Position, Entity.Position , Entity.DefaultHull.Mins, Entity.DefaultHull.Maxs);
+			return !hit.StartedSolid;
+		}
+		return false;
+	}
 }
