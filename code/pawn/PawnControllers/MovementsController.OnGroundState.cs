@@ -174,11 +174,12 @@ public partial class MovementsController
 		var curHull = Entity.Hull;
 		float duckLerp = 0f;
 		
-		while ( !Entity.Hull.Size.AlmostEqual( to.Size ) )
+		while ( duckLerp < 1 )
 		{
 			Entity.Hull = curHull.Lerp( to, duckLerp += (Time.Delta * 10f) );
 			yield return new WaitForNextTick();
 		}
+		Entity.Hull = to;
 	}
 	
 	private void OnExitDuckState()
