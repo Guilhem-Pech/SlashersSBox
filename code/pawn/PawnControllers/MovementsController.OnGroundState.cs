@@ -11,6 +11,8 @@ public class EventOnGrounded : Utils.Event
 public partial class MovementsController
 {
 	private float m_desiredSpeed = 0f;
+	public float SurfaceFriction { get; set; }
+
 	private void OnEnterGroundState()
 	{
 		Entity.Velocity = Entity.Velocity.WithZ( 0 );

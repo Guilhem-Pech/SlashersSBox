@@ -54,6 +54,7 @@ public partial class MovementsController : EntityComponent<Pawn>
 		if ( trace.Normal.Angle( Vector3.Up ) > GroundAngle )
 			return null;
 
+		SurfaceFriction = trace.Surface.Friction;
 		return trace.Entity;
 	}
 	
