@@ -51,20 +51,26 @@ namespace Sandbox.Utils
 
 		public void UnregisterAllEvents(IEventListener eventListener)
 		{
-			if (eventListener == null) throw new ArgumentNullException(nameof(eventListener));
-
 			lock (m_syncLock)
 			{
+				var keysToRemove = new List<Type>();
 				foreach (var key in listeners.Keys)
 				{
-					if (listeners[key].RemoveAll(x => !x.listener.TryGetTarget( out var c ) || ReferenceEquals( c, eventListener ) ) > 0 
-					    && listeners[key].Count == 0)
-						listeners.TryRemove(key, out _);
+					if (listeners.TryGetValue(key, out var existingList))
+					{
+						existingList.RemoveAll(x => x.listener.TryGetTarget(out var listener) && listener == eventListener);
+						if (existingList.Count == 0)
+						{
+							keysToRemove.Add(key);
+						}
+					}
+				}
+				foreach (var key in keysToRemove)
+				{
+					listeners.TryRemove(key, out _);
 				}
 			}
 		}
-
-		class A : Event {}
         public void SendEvent(Event eventToSend)
         {
 	        var eventType = eventToSend.GetType();
@@ -74,10 +80,7 @@ namespace Sandbox.Utils
 		        {
 			        if (listenerRef.TryGetTarget(out var listener))
 			        {
-				        if (callback is Action<Event> action)
-				        {
-					        action.Invoke(eventToSend); 
-				        }
+				        callback.Invoke(eventToSend);
 			        }
 		        }
 	        }
