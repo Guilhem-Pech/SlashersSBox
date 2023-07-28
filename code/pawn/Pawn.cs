@@ -147,7 +147,9 @@ public partial class Pawn : AnimatedEntity
 		
 		if ( !trace.Hit ) return;
 
-		volume *= Velocity.WithZ( 0f ).Length.LerpInverse( 20f, 300f ) * 1f;
+		float sqrJogSpeed = Controller.JogSpeed * Controller.JogSpeed;
+		volume *= Velocity.WithZ( 0f ).LengthSquared.LerpInverse( 0,  sqrJogSpeed * 0.8f) * 1f;
+
 		trace.Surface.DoFootstep( this, trace, foot, volume );
 		
 		m_timeStampLastFootStep = Time.Now;
