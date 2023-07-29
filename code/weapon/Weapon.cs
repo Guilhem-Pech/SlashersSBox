@@ -1,209 +1,570 @@
-using Sandbox;
+using System;
 using System.Collections.Generic;
+using Sandbox.pawn;
 using Sandbox.pawn.PawnControllers;
+using Sandbox.Utility;
+using Sandbox.Utils;
 
-namespace MyGame;
+namespace Sandbox.weapon;
 
-public partial class Weapon : AnimatedEntity
+public abstract partial class Weapon : BaseWeapon
 {
-	/// <summary>
-	/// The View Model's entity, only accessible clientside.
-	/// </summary>
-	public WeaponViewModel ViewModelEntity { get; protected set; }
+	public abstract WeaponConfig Config { get; }
+	public virtual string MuzzleAttachment => "muzzle";
+	public virtual string MuzzleFlashEffect => "particles/pistol_muzzleflash.vpcf";
 
-	/// <summary>
-	/// An accessor to grab our Pawn.
-	/// </summary>
-	public Pawn Pawn => Owner as Pawn;
+	public virtual List<string> FlybySounds => new()
+	{
+		"flyby.rifleclose1", "flyby.rifleclose2", "flyby.rifleclose3", "flyby.rifleclose4"
+	};
 
-	/// <summary>
-	/// This'll decide which entity to fire effects from. If we're in first person, the View Model, otherwise, this.
-	/// </summary>
-	public AnimatedEntity EffectEntity => Camera.FirstPersonViewer == Owner ? ViewModelEntity : this;
+	public virtual bool ShowHitMarkerCrosshair => true;
+	public virtual bool ShowChargeCrosshair => true;
+	public virtual bool ShowRegularCrosshair => false;
+	public virtual string? ImpactEffect => null;
+	public virtual int ClipSize => 16;
+	public virtual float AutoReloadDelay => 1.5f;
+	public virtual float ReloadTime => 3f;
+	public virtual bool IsMelee => false;
+	public virtual float DamageFalloffStart => 0f;
+	public virtual float DamageFalloffEnd => 0f;
+	public virtual float BulletRange => 20000f;
+	public virtual bool AutoReload => true;
+	public virtual string? TracerEffect => null;
+	public virtual bool UnlimitedAmmo => false;
+	public virtual bool CanMeleeAttack => false;
+	public virtual bool IsPassive => false;
+	public virtual bool HasFlashlight => true;
+	public virtual bool IsAutomatic => true;
+	public virtual float MeleeDuration => 0.4f;
+	public virtual float MeleeDamage => 80f;
+	public virtual float MeleeForce => 2f;
+	public virtual float MeleeRange => 200f;
+	public virtual float MeleeRate => 1f;
+	public virtual float ChargeAttackDuration => 2f;
+	public virtual string DamageType => "bullet";
+	public virtual CitizenAnimationHelper.HoldTypes HoldType => CitizenAnimationHelper.HoldTypes.Pistol;
+	public virtual int ViewModelMaterialGroup => 0;
+	public override string ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
+	public override string ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
 
-	public virtual string? ViewModelPath => null;
-	public virtual string? ModelPath => null;
+	[Net] public int Slot { get; set; }
 
-	/// <summary>
-	/// How often you can shoot this gun.
-	/// </summary>
-	public virtual float PrimaryRate => 5.0f;
+	[Net, Predicted] public int AmmoClip { get; set; }
 
-	/// <summary>
-	/// How long since we last shot this gun.
-	/// </summary>
-	[Net, Predicted] public TimeSince TimeSincePrimaryAttack { get; set; }
+	[Net, Predicted] public TimeSince TimeSinceReload { get; set; }
+
+	[Net, Predicted] public bool IsReloading { get; set; }
+
+	[Net, Predicted] public TimeSince TimeSinceDeployed { get; set; }
+
+	[Net, Predicted] public TimeSince TimeSinceChargeAttack { get; set; }
+
+	[Net, Predicted] public TimeSince TimeSinceMeleeAttack { get; set; }
+
+	public float ChargeAttackEndTime { get; private set; }
+	public AnimatedEntity AnimationOwner => Owner as AnimatedEntity ?? throw new InvalidOperationException();
+
+	private Queue<Angles> RecoilQueue { get; set; } = new();
+
+	public Pawn Player => Owner as Pawn ?? throw new InvalidOperationException();
+
+	private InventoryController? OwnerInventory => (Owner as Pawn)?.InventoryController;
+	public int AvailableAmmo()
+	{
+		if ( OwnerInventory == null ) return 0;
+		return OwnerInventory.AmmoCount( Config.AmmoType );
+	}
+
+	public void AddRecoil( Angles angles )
+	{
+		if ( Game.IsServer ) return;
+		RecoilQueue.Enqueue( angles );
+	}
+
+	public float GetDamageFalloff( float distance, float damage )
+	{
+		return Util.Weapons.GetDamageFalloff( distance, damage, DamageFalloffStart, DamageFalloffEnd );
+	}
+
+	public virtual void Restock()
+	{
+		var remainingAmmo = (ClipSize - AmmoClip);
+
+		if ( remainingAmmo > 0 && OwnerInventory is {} inventory )
+		{
+			inventory.GiveAmmo( Config.AmmoType, remainingAmmo );
+		}
+	}
+
+	public virtual bool IsAvailable()
+	{
+		return true;
+	}
+
+	public virtual void PlayAttackAnimation()
+	{
+		AnimationOwner?.SetAnimParameter( "b_attack", true );
+	}
+
+	public virtual void PlayReloadAnimation()
+	{
+		AnimationOwner?.SetAnimParameter( "b_reload", true );
+	}
+	public virtual void OnMeleeAttack()
+	{
+		ViewModelEntity?.SetAnimParameter( "melee", true );
+		TimeSinceMeleeAttack = 0f;
+		MeleeStrike( MeleeDamage, MeleeForce );
+		PlaySound( "player.melee" );
+	}
+
+	public override bool CanReload()
+	{
+		if ( CanMeleeAttack && TimeSinceMeleeAttack < (1 / MeleeRate) )
+		{
+			return false;
+		}
+
+		if ( AutoReload && TimeSincePrimaryAttack > AutoReloadDelay && AmmoClip == 0 )
+		{
+			return true;
+		}
+
+		return base.CanReload();
+	}
+
+	public override void ActiveStart( Entity owner )
+	{
+		base.ActiveStart( owner );
+
+		TimeSinceDeployed = 0f;
+	}
+
+	public override void ActiveEnd( Entity owner, bool dropped )
+	{
+		base.ActiveEnd( owner, dropped );
+
+		IsReloading = false;
+	}
 
 	public override void Spawn()
 	{
-		EnableHideInFirstPerson = true;
-		EnableShadowInFirstPerson = true;
-		EnableDrawing = false;
+		base.Spawn();
 
-		if ( ModelPath != null )
-		{
-			SetModel( ModelPath );
-		}
+		AmmoClip = ClipSize;
+		EnableShadowInFirstPerson = false;
+
+		SetModel( ModelPath );
 	}
 
-	/// <summary>
-	/// Called when <see cref="InventoryController.SetActiveWeapon(Weapon)"/> is called for this weapon.
-	/// </summary>
-	/// <param name="pawn"></param>
-	public void OnEquip( Pawn pawn )
+	public override void Reload()
 	{
-		Owner = pawn;
-		SetParent( pawn, true );
-		EnableDrawing = true;
-		CreateViewModel( To.Single( pawn ) );
-	}
+		if ( IsMelee || IsReloading )
+			return;
 
-	/// <summary>
-	/// Called when the weapon is either removed from the player, or holstered.
-	/// </summary>
-	public void OnHolster()
-	{
-		EnableDrawing = false;
-		if(Owner?.Client != null)
+		if ( AmmoClip >= ClipSize )
+			return;
+
+		TimeSinceReload = 0f;
+
+		if ( OwnerInventory is {} playerInventory )
 		{
-			DestroyViewModel( To.Single( Owner ) );
-		}
-	}
-
-	/// <summary>
-	/// Called from <see cref="Pawn.Simulate(IClient)"/>.
-	/// </summary>
-	/// <param name="player"></param>
-	public override void Simulate( IClient player )
-	{
-		Animate();
-
-		if ( CanPrimaryAttack() )
-		{
-			using ( LagCompensation() )
+			if ( !UnlimitedAmmo )
 			{
-				TimeSincePrimaryAttack = 0;
-				PrimaryAttack();
+				if ( playerInventory.AmmoCount( Config.AmmoType ) <= 0 )
+					return;
+			}
+		}
+
+		IsReloading = true;
+
+		PlayReloadAnimation();
+		PlayReloadSound();
+		DoClientReload();
+	}
+
+	public override void Simulate( IClient owner )
+	{
+		if ( Player.LifeState == LifeState.Alive )
+		{
+			if ( ChargeAttackEndTime > 0f && Time.Now >= ChargeAttackEndTime )
+			{
+				OnChargeAttackFinish();
+				ChargeAttackEndTime = 0f;
+			}
+		}
+		else
+		{
+			ChargeAttackEndTime = 0f;
+		}
+
+		if ( Input.Down( "zoom" ) )
+		{
+			if ( CanMeleeAttack && TimeSinceMeleeAttack > (1 / MeleeRate) )
+			{
+				IsReloading = false;
+				OnMeleeAttack();
+				return;
+			}
+		}
+
+		if ( !IsReloading )
+		{
+			base.Simulate( owner );
+		}
+
+		if ( IsReloading && TimeSinceReload > ReloadTime )
+		{
+			OnReloadFinish();
+		}
+	}
+
+	public override void SimulateAnimator( AnimatorController anim )
+	{
+		base.SimulateAnimator( anim );
+		anim.HoldType = HoldType;
+	}
+
+	public override bool CanPrimaryAttack()
+	{
+		if ( ChargeAttackEndTime > 0f && Time.Now < ChargeAttackEndTime )
+			return false;
+
+		if ( TimeSinceMeleeAttack < MeleeDuration )
+			return false;
+
+		if ( TimeSinceDeployed < 0.3f )
+			return false;
+
+		if ( !IsAutomatic && !Input.Pressed( "attack1" ) )
+			return false;
+
+		return base.CanPrimaryAttack();
+	}
+
+	public override bool CanSecondaryAttack()
+	{
+		if ( ChargeAttackEndTime > 0f && Time.Now < ChargeAttackEndTime )
+			return false;
+
+		return base.CanSecondaryAttack();
+	}
+
+	public virtual void StartChargeAttack()
+	{
+		ChargeAttackEndTime = Time.Now + ChargeAttackDuration;
+	}
+
+	public virtual void OnChargeAttackFinish() { }
+
+	public virtual void OnReloadFinish()
+	{
+		IsReloading = false;
+
+		if ( OwnerInventory is {} playerInventory )
+		{
+			if ( !UnlimitedAmmo )
+			{
+				var ammo = playerInventory.TakeAmmo( Config.AmmoType, ClipSize - AmmoClip );
+
+				if ( ammo == 0 )
+					return;
+
+				AmmoClip += ammo;
+			}
+			else
+			{
+				AmmoClip = ClipSize;
 			}
 		}
 	}
 
-	/// <summary>
-	/// Called every <see cref="Simulate(IClient)"/> to see if we can shoot our gun.
-	/// </summary>
-	/// <returns></returns>
-	public virtual bool CanPrimaryAttack()
-	{
-		if ( !Owner.IsValid() || !Input.Down( "attack1" ) ) return false;
-
-		var rate = PrimaryRate;
-		if ( rate <= 0 ) return true;
-
-		return TimeSincePrimaryAttack > (1 / rate);
-	}
-
-	/// <summary>
-	/// Called when your gun shoots.
-	/// </summary>
-	public virtual void PrimaryAttack()
+	public virtual void PlayReloadSound()
 	{
 	}
 
-	/// <summary>
-	/// Useful for setting anim parameters based off the current weapon.
-	/// </summary>
-	protected virtual void Animate()
+	public virtual void RenderHud( Vector2 screenSize )
 	{
+		if ( Owner is not Pawn player )
+			return;
+
+		RenderCrosshair( player, screenSize * 0.5f );
 	}
 
-	/// <summary>
-	/// Does a trace from start to end, does bullet impact effects. Coded as an IEnumerable so you can return multiple
-	/// hits, like if you're going through layers or ricocheting or something.
-	/// </summary>
-	public virtual IEnumerable<TraceResult> TraceBullet( Vector3 start, Vector3 end, float radius = 2.0f )
+	private static Color _lightRed = Color.Red.WithAlpha( 0.8f );
+	
+	public virtual void RenderCrosshair( Pawn player, Vector2 center )
 	{
-		bool underWater = Trace.TestPoint( start, "water" );
+		var draw = Util.Draw;
+		var lastHitMarkerTime = player.TimeSinceLastHit.Relative;
+		var color = Color.Lerp( Color.Red, Color.White, lastHitMarkerTime.LerpInverse( 0.0f, 0.4f ) );
+		var hitEase = Easing.BounceIn( lastHitMarkerTime.LerpInverse( 0.5f, 0.0f ) );
+		var circleSize = 56f * hitEase;
+		var circleThickness = 24f * hitEase;
 
-		var trace = Trace.Ray( start, end )
-				.UseHitboxes()
-				.WithAnyTags( "solid", "player", "npc" )
-				.Ignore( this )
-				.Size( radius );
+		if ( ShowHitMarkerCrosshair )
+		{
+			draw.BlendMode = BlendMode.Lighten;
+			draw.Color = _lightRed;
+			draw.CircleEx( center, circleSize, circleSize - circleThickness );
+		}
 
-		//
-		// If we're not underwater then we can hit water
-		//
-		if ( !underWater )
-			trace = trace.WithAnyTags( "water" );
+		if ( ShowChargeCrosshair && ChargeAttackEndTime > 0f )
+		{
+			var fraction = Easing.EaseIn( (ChargeAttackEndTime - Time.Now) / ChargeAttackDuration );
 
-		var tr = trace.Run();
+			circleSize = 48f * (1f - fraction);
+			circleThickness = 8f * (1f - fraction);
 
-		if ( tr.Hit )
-			yield return tr;
+			draw.BlendMode = BlendMode.Lighten;
+			draw.Color = Color.Red.Darken( 0.3f ).WithAlpha( 0.8f );
+			draw.CircleEx( center, circleSize, circleSize - circleThickness );
+		}
+
+		if ( ShowRegularCrosshair )
+		{
+			var lastAttackTime = TimeSincePrimaryAttack.Relative;
+			var shootEase = Easing.EaseIn( lastAttackTime.LerpInverse( 0.2f, 0.0f ) );
+
+			draw.Color = color.WithAlpha( 0.4f + lastAttackTime.LerpInverse( 1f, 0 ) * 0.5f );
+
+			var length = 8.0f - shootEase * 2.0f;
+			var gap = 10.0f + shootEase * 50.0f;
+			var thickness = 6.0f;
+
+			draw.Line( thickness, center + Vector2.Left * gap, center + Vector2.Left * (length + gap) );
+			draw.Line( thickness, center - Vector2.Left * gap, center - Vector2.Left * (length + gap) );
+			draw.Line( thickness, center + Vector2.Up * gap, center + Vector2.Up * (length + gap) );
+			draw.Line( thickness, center - Vector2.Up * gap, center - Vector2.Up * (length + gap) );
+		}
 	}
 
-	/// <summary>
-	/// Shoot a single bullet
-	/// </summary>
-	public virtual void ShootBullet( Vector3 pos, Vector3 dir, float spread, float force, float damage, float bulletSize )
+	[ClientRpc]
+	public virtual void DoClientReload()
 	{
-		var forward = dir;
+		ViewModelEntity?.SetAnimParameter( "reload", true );
+	}
+
+	public override void AttackPrimary()
+	{
+		TimeSincePrimaryAttack = 0f;
+		TimeSinceSecondaryAttack = 0f;
+
+		Game.SetRandomSeed( Time.Tick );
+
+		ShootEffects();
+		ShootBullet( 0.05f, 1.5f, Config.Damage, 3.0f );
+	}
+
+	public virtual void MeleeStrike( float damage, float force )
+	{
+		var traceSize = 20f;
+		var forward = Player.EyeRotation.Forward.Normal;
+
+		foreach ( var trace in TraceBullet( Player.EyePosition, Player.EyePosition + forward * MeleeRange, traceSize ) )
+		{
+			if ( !trace.Entity.IsValid() )
+				continue;
+
+			if ( !IsValidMeleeTarget( trace.Entity ) )
+				continue;
+
+			var impactTrace = trace;
+			impactTrace.EndPosition -= trace.Normal * (traceSize * 0.5f);
+			trace.Surface.DoBulletImpact( impactTrace );
+
+			if ( !string.IsNullOrEmpty( ImpactEffect ) )
+			{
+				var impact = Particles.Create( ImpactEffect, trace.EndPosition );
+				impact?.SetForward( 0, trace.Normal );
+			}
+
+			if ( Game.IsServer )
+			{
+				using ( Prediction.Off() )
+				{
+					var damageInfo = new DamageInfo()
+						.WithPosition( trace.EndPosition )
+						.WithTag( "blunt" )
+						.WithForce( forward * 100f * force )
+						.UsingTraceResult( trace )
+						.WithAttacker( Owner )
+						.WithWeapon( this );
+
+					damageInfo.Damage = damage;
+
+					trace.Entity.TakeDamage( damageInfo );
+
+					OnMeleeStrikeHit( trace.Entity, damageInfo );
+				}
+			}
+		}
+	}
+
+	public virtual void ShootBullet( float spread, float force, float damage, float bulletSize )
+	{
+		var forward = Player.EyeRotation.Forward;
 		forward += (Vector3.Random + Vector3.Random + Vector3.Random + Vector3.Random) * spread * 0.25f;
 		forward = forward.Normal;
 
-		//
-		// ShootBullet is coded in a way where we can have bullets pass through shit
-		// or bounce off shit, in which case it'll return multiple results
-		//
-		foreach ( var tr in TraceBullet( pos, pos + forward * 5000, bulletSize ) )
+		foreach ( var trace in TraceBullet( Player.EyePosition, Player.EyePosition + forward * BulletRange,
+			         bulletSize ) )
 		{
-			tr.Surface.DoBulletImpact( tr );
+			var impactTrace = trace;
+			impactTrace.EndPosition -= trace.Normal * (bulletSize * 0.5f);
+			trace.Surface.DoBulletImpact( impactTrace );
 
-			if ( !Game.IsServer ) continue;
-			if ( !tr.Entity.IsValid() ) continue;
+			var fullEndPos = trace.EndPosition + trace.Direction * bulletSize;
 
-			//
-			// We turn predictiuon off for this, so any exploding effects don't get culled etc
-			//
-			using ( Prediction.Off() )
+			if ( !string.IsNullOrEmpty( TracerEffect ) )
 			{
-				var damageInfo = DamageInfo.FromBullet( tr.EndPosition, forward * 100 * force, damage )
-					.UsingTraceResult( tr )
-					.WithAttacker( Owner )
-					.WithWeapon( this );
+				var tracer = Particles.Create( TracerEffect, GetEffectEntity(), MuzzleAttachment );
+				tracer?.SetPosition( 1, fullEndPos );
+				tracer?.SetPosition( 2, trace.Distance );
+			}
 
-				tr.Entity.TakeDamage( damageInfo );
+			if ( !string.IsNullOrEmpty( ImpactEffect ) )
+			{
+				var impact = Particles.Create( ImpactEffect, fullEndPos );
+				impact?.SetForward( 0, trace.Normal );
+			}
+
+			if ( !Game.IsServer )
+				continue;
+
+			Util.Weapons.PlayFlybySounds( Owner, trace.Entity, trace.StartPosition, trace.EndPosition, bulletSize * 2f,
+				bulletSize * 50f, FlybySounds );
+
+			if ( trace.Entity.IsValid() )
+			{
+				using ( Prediction.Off() )
+				{
+					var damageInfo = new DamageInfo()
+						.WithPosition( trace.EndPosition )
+						.WithTag( DamageType )
+						.WithForce( forward * 100f * force )
+						.UsingTraceResult( trace )
+						.WithAttacker( Owner )
+						.WithWeapon( this );
+
+					damageInfo.Damage = GetDamageFalloff( trace.Distance, damage );
+
+					trace.Entity.TakeDamage( damageInfo );
+				}
 			}
 		}
 	}
 
-	/// <summary>
-	/// Shoot a single bullet from owners view point
-	/// </summary>
-	public virtual void ShootBullet( float spread, float force, float damage, float bulletSize )
+	public bool TakeAmmo( int amount )
 	{
-		Game.SetRandomSeed( Time.Tick );
+		if ( Config.AmmoType == AmmoType.None )
+			return false;
 
-		var ray = Owner.AimRay;
-		ShootBullet( ray.Position, ray.Forward, spread, force, damage, bulletSize );
+		if ( AmmoClip < amount )
+			return false;
+
+		AmmoClip -= amount;
+		return true;
 	}
 
-	[ClientRpc]
-	public void CreateViewModel()
+	public override void CreateViewModel()
 	{
-		if ( ViewModelPath == null ) return;
+		Game.AssertClient();
 
-		var vm = new WeaponViewModel( this );
-		vm.Model = Model.Load( ViewModelPath );
-		ViewModelEntity = vm;
+		if ( string.IsNullOrEmpty( ViewModelPath ) )
+			return;
+
+		ViewModelEntity = new ViewModel { EnableViewmodelRendering = true, Position = Position, Owner = Owner };
+
+		ViewModelEntity.SetModel( ViewModelPath );
+		ViewModelEntity.SetMaterialGroup( ViewModelMaterialGroup );
 	}
 
-	[ClientRpc]
-	public void DestroyViewModel()
+	public bool IsUsable()
 	{
-		if ( ViewModelEntity.IsValid() )
+		if ( IsMelee || ClipSize == 0 || AmmoClip > 0 || UnlimitedAmmo )
 		{
-			ViewModelEntity.Delete();
+			return true;
 		}
+
+		return AvailableAmmo() > 0;
+	}
+
+	public override void BuildInput()
+	{
+		if ( RecoilQueue.Count > 0 )
+		{
+			var recoil = RecoilQueue.Dequeue();
+			if ( Player is { } player)
+			{
+				player.ViewAngles += recoil;
+			}
+		}
+	}
+
+	public override IEnumerable<TraceResult> TraceBullet( Vector3 start, Vector3 end, float radius = 2.0f )
+	{
+		yield return Trace.Ray( start, end )
+			.UseHitboxes()
+			.Ignore( Owner )
+			.WithoutTags( "trigger" )
+			.Ignore( this )
+			.Size( radius )
+			.Run();
+	}
+
+	protected virtual void CreateMuzzleFlash()
+	{
+		if ( !string.IsNullOrEmpty( MuzzleFlashEffect ) )
+		{
+			Particles.Create( MuzzleFlashEffect, GetEffectEntity(), "muzzle" );
+		}
+	}
+
+	protected virtual void OnMeleeStrikeHit( Entity entity, DamageInfo info )
+	{
+	}
+
+	[ClientRpc]
+	protected virtual void ShootEffects()
+	{
+		Game.AssertClient();
+
+		if ( !IsMelee )
+		{
+			CreateMuzzleFlash();
+		}
+
+		ViewModelEntity?.SetAnimParameter( "fire", true );
+	}
+
+	protected virtual ModelEntity GetEffectEntity()
+	{
+		return EffectEntity;
+	}
+
+	protected virtual bool IsValidMeleeTarget( Entity target )
+	{
+		return true;
+	}
+
+	protected void DealDamage( Entity target, Vector3 position, Vector3 force )
+	{
+		DealDamage( target, position, force, Config.Damage );
+	}
+
+	protected void DealDamage( Entity target, Vector3 position, Vector3 force, float damage )
+	{
+		var damageInfo = new DamageInfo()
+			.WithAttacker( Owner )
+			.WithWeapon( this )
+			.WithPosition( position )
+			.WithForce( force )
+			.WithTag( DamageType );
+
+		damageInfo.Damage = damage;
+
+		target.TakeDamage( damageInfo );
 	}
 }

@@ -74,7 +74,8 @@ public partial class Pawn : AnimatedEntity
 	[BindComponent] public InventoryController InventoryController { get; }
 
 	public override Ray AimRay => new Ray( EyePosition, EyeRotation.Forward );
-	
+	public TimeSince TimeSinceLastHit { get; set; } = new TimeSince(); // TODO: Use it
+
 	private float m_timeStampLastFootStep = 0f;
 
 	/// <summary>
