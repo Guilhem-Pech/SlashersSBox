@@ -170,9 +170,7 @@ public partial class MovementsController
 		m_desiredSpeed = DuckSpeed;
 		Entity.EventDispatcher.SendEvent<EventOnDuck>();
 		
-		Coroutine.Stop( m_duckCoroutine );
-		m_duckCoroutine = ResizeDuckHull( Entity.DuckHull );
-		Coroutine.Start( m_duckCoroutine);
+		ResizeHull( Entity.DuckHull );
 	}
 	
 	CoroutineEnumerator ResizeDuckHull(BBox to)
@@ -182,19 +180,23 @@ public partial class MovementsController
 		
 		while ( duckLerp < 1 )
 		{
-			Entity.Hull = curHull.Lerp( to, duckLerp += (Time.Delta * 10f) );
-			yield return new WaitForNextTick();
+			Entity.Hull = curHull.Lerp( to, duckLerp += (Game.TickInterval * 10f) );
+			yield return new WaitForNextSimulate(Entity.Client);
 		}
 		Entity.Hull = to; 
 	}
 	
 	private void OnExitDuckState()
 	{
-		Coroutine.Stop( m_duckCoroutine );
-		m_duckCoroutine = ResizeDuckHull( Entity.DefaultHull );
-		Coroutine.Start( m_duckCoroutine);
-		
+		ResizeHull(Entity.DefaultHull);
 		Entity.EventDispatcher.SendEvent<EventOnUnDuck>();
+	}
+
+	private void ResizeHull(BBox to)
+	{
+		Coroutine.Stop(m_duckCoroutine);
+		m_duckCoroutine = ResizeDuckHull(to);
+		Coroutine.Start(m_duckCoroutine);
 	}
 }
 

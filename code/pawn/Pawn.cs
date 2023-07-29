@@ -1,5 +1,6 @@
 ﻿using Sandbox;
 using System.ComponentModel;
+using Coroutines;
 using Sandbox.pawn.PawnControllers;
 using Sandbox.Utils;
 
@@ -8,7 +9,7 @@ namespace MyGame;
 public partial class Pawn : AnimatedEntity
 {
 	[Net, Predicted]
-	public Weapon ActiveWeapon { get; set; }
+	public Weapon? ActiveWeapon { get; set; }
 
 	[ClientInput]
 	public Vector3 InputDirection { get; set; }
@@ -68,6 +69,7 @@ public partial class Pawn : AnimatedEntity
 		);
 	}
 	
+	[Net, Predicted]
 	public BBox Hull { set; get; }
 
 	[BindComponent] public MovementsController Controller { get; }
@@ -95,11 +97,11 @@ public partial class Pawn : AnimatedEntity
 		Components.GetOrCreate<CameraController>();
 	}
 
-	public void SetActiveWeapon( Weapon weapon )
+	public void SetActiveWeapon( Weapon? weapon )
 	{
 		ActiveWeapon?.OnHolster();
 		ActiveWeapon = weapon;
-		ActiveWeapon.OnEquip( this );
+		ActiveWeapon?.OnEquip( this );
 	}
 
 	public void Respawn()
@@ -122,6 +124,7 @@ public partial class Pawn : AnimatedEntity
 		AnimatorController?.Simulate(cl);
 		ActiveWeapon?.Simulate( cl );
 		EyeLocalPosition = Vector3.Up * (Hull.Maxs.z * Scale);
+		Coroutine.Simulate( cl );
 	}
 	
 	public override void FrameSimulate( IClient cl )
