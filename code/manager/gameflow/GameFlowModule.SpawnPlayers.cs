@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using MyGame;
+using Pawn = Sandbox.pawn.Pawn;
 
 namespace Sandbox.Manager.GameFlow
 {

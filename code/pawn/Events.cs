@@ -1,6 +1,4 @@
-﻿using Sandbox.Utils;
+﻿namespace Sandbox.pawn;
 
-namespace MyGame;
-
-public class EventOnRespawn : Event
+public class EventOnRespawn : Utils.Event
 {}

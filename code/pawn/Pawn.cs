@@ -1,11 +1,9 @@
-﻿using Sandbox;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Coroutines;
 using Sandbox.pawn.PawnControllers;
 using Sandbox.Utils;
-using Event = Sandbox.Utils.Event;
 
-namespace MyGame;
+namespace Sandbox.pawn;
 
 public partial class Pawn : AnimatedEntity
 {
