@@ -130,6 +130,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	}
 	public int TakeAmmo(AmmoType configAmmoType, int clipSize)
 	{
+		clipSize = Math.Max( clipSize, 0 );
 		if (!m_currentAmmunitionAvailable.TryGetValue(configAmmoType, out var current))
 		{
 			return 0;
