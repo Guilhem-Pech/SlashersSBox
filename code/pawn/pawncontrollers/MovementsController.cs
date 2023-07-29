@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using MyGame;
+﻿using MyGame;
 
 namespace Sandbox.pawn.PawnControllers;
 
@@ -14,7 +12,7 @@ public partial class MovementsController : EntityComponent<Pawn>
 	
 	public int StepSize => 24;
 	public int GroundAngle => 45;
-	public int JumpSpeed => 300;
+	public int JumpSpeed { get; set; }= 300;
 	public float Gravity => 800f;
 
 	bool Grounded => Entity.GroundEntity.IsValid();

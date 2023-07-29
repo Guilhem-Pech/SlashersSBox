@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using MyGame;
+﻿using MyGame;
 using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
