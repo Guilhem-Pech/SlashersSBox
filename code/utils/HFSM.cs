@@ -1,5 +1,4 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,13 +8,13 @@ namespace Sandbox.Utils;
 public interface IState {}
 public class Transition<TEvent> where TEvent: struct, Enum
 {
-    private IState m_to;
+    private readonly IState m_to;
     private Func<bool> m_guard = () => true;
-    private TEvent? m_event = null;
+    private readonly TEvent? m_event = null;
 	
     public Transition(IState to)
     {
-        m_to = to;
+        m_to = to ?? throw new ArgumentNullException(nameof(to));;
     }
     public Transition(IState to, TEvent @event) : this(to)
     {
@@ -57,31 +56,33 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     private static readonly Action? NoActivity = () => { };
     public State(TName name)
     {
-        m_name = name;
+        Name = name;
     }
     
     public State(TName name, State<TName, TEvent>? root = null, Action? onEnterAction = null, Action? onUpdateAction = null,
-        Action? onExitAction = null)
-        : this(name)
+	    Action? onExitAction = null)
+	    : this(name)
     {
-        m_parentState = root;
-        root?.AddChild(this);
-        
-        if (onEnterAction != null) m_onEnterAction = onEnterAction;
-        if (onUpdateAction != null) m_onUpdateAction = onUpdateAction;
-        if (onExitAction != null) m_onExitAction = onExitAction;
-    }
-    
-    public State(TName name, Action? onEnterAction = null, Action? onUpdateAction = null,
-        Action? onExitAction = null)
-        : this(name)
-    {
-        if (onEnterAction != null) m_onEnterAction = onEnterAction;
-        if (onUpdateAction != null) m_onUpdateAction = onUpdateAction;
-        if (onExitAction != null) m_onExitAction = onExitAction;
+	    InitializeActions(onEnterAction, onUpdateAction, onExitAction);    
+	    m_parentState = root;
+	    root?.AddChild(this);
     }
 
-    private TName m_name;
+    public State(TName name, Action? onEnterAction = null, Action? onUpdateAction = null,
+	    Action? onExitAction = null)
+	    : this(name)
+    {
+	    InitializeActions(onEnterAction, onUpdateAction, onExitAction);
+    }
+
+    private void InitializeActions(Action? onEnterAction, Action? onUpdateAction, Action? onExitAction)
+    {
+	    if (onEnterAction != null) m_onEnterAction = onEnterAction;
+	    if (onUpdateAction != null) m_onUpdateAction = onUpdateAction;
+	    if (onExitAction != null) m_onExitAction = onExitAction;
+    }
+
+    public TName Name { get; private set; }
 
     private Action? m_onEnterAction = NoActivity;
     private Action? m_onUpdateAction = NoActivity;
@@ -126,7 +127,6 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
         return m_parentState;
     }
 
-    public TName Name { get => m_name; set => m_name = value; }
     public void OnEnter() { m_onEnterAction?.Invoke(); }
     public void OnUpdate() { m_onUpdateAction?.Invoke(); }
     public void OnExit() { m_onExitAction?.Invoke(); }
@@ -248,8 +248,20 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
         
         foreach (var transitionInfo in m_transitionInfos)
         {
-            State<TName, TEvent> from = m_states[transitionInfo.From];
-            State<TName, TEvent> to = m_states[transitionInfo.To];
+            m_states.TryGetValue( transitionInfo.From, out State<TName, TEvent>? from );
+            m_states.TryGetValue( transitionInfo.To, out State<TName, TEvent>? to );
+
+            if ( from == null )
+            {
+	            Log.Error( $"Cannot add transition {transitionInfo.From} => {transitionInfo.To} - {transitionInfo.From} state is not defined" );
+	            continue;
+            }
+            
+            if ( to == null )
+            {
+	            Log.Error( $"Cannot add transition {transitionInfo.From} => {transitionInfo.To} - {transitionInfo.To} state is not defined" );
+	            continue;
+            }
             
             if (transitionInfo is { Trigger: not null, Guard: not null })
             {
@@ -273,10 +285,10 @@ public class HFSMBuilder<TName, TEvent> where TEvent : struct, Enum where TName 
 }
 public class HFSM<TName, TEvent> where TEvent: struct, Enum where TName: Enum 
 {
-    private State<TName, TEvent> m_initialState;
+    private readonly State<TName, TEvent> m_initialState;
     private State<TName, TEvent>? m_currentState;
 
-    private Queue<TEvent?> m_eventToTreat = new();
+    private readonly Queue<TEvent?> m_eventToTreat = new();
     
     public bool EnableDebugLog { set; get; } = false;
     
