@@ -3,7 +3,7 @@ using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
 
-public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IEventListener
+public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IEventListener, IComponentSimulable
 {
 	private CitizenAnimationHelper m_helper;
 

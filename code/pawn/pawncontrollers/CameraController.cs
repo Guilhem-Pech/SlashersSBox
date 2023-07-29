@@ -1,8 +1,9 @@
 ﻿using MyGame;
+using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
 
-public class CameraController : EntityComponent<Pawn>
+public class CameraController : EntityComponent<Pawn>, IComponentSimulable
 {
 	bool IsThirdPerson { get; set; } = false;
 	

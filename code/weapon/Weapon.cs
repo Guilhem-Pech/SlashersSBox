@@ -1,5 +1,6 @@
 using Sandbox;
 using System.Collections.Generic;
+using Sandbox.pawn.PawnControllers;
 
 namespace MyGame;
 
@@ -20,8 +21,8 @@ public partial class Weapon : AnimatedEntity
 	/// </summary>
 	public AnimatedEntity EffectEntity => Camera.FirstPersonViewer == Owner ? ViewModelEntity : this;
 
-	public virtual string ViewModelPath => null;
-	public virtual string ModelPath => null;
+	public virtual string? ViewModelPath => null;
+	public virtual string? ModelPath => null;
 
 	/// <summary>
 	/// How often you can shoot this gun.
@@ -46,7 +47,7 @@ public partial class Weapon : AnimatedEntity
 	}
 
 	/// <summary>
-	/// Called when <see cref="Pawn.SetActiveWeapon(Weapon)"/> is called for this weapon.
+	/// Called when <see cref="InventoryController.SetActiveWeapon(Weapon)"/> is called for this weapon.
 	/// </summary>
 	/// <param name="pawn"></param>
 	public void OnEquip( Pawn pawn )
@@ -63,7 +64,10 @@ public partial class Weapon : AnimatedEntity
 	public void OnHolster()
 	{
 		EnableDrawing = false;
-		DestroyViewModel( To.Single( Owner ) );
+		if(Owner?.Client != null)
+		{
+			DestroyViewModel( To.Single( Owner ) );
+		}
 	}
 
 	/// <summary>

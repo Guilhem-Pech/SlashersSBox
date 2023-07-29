@@ -4,8 +4,8 @@ namespace MyGame;
 
 public partial class Pistol : Weapon
 {
-	public override string ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
-	public override string ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
+	public override string? ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
+	public override string? ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
 
 	[ClientRpc]
 	protected virtual void ShootEffects()

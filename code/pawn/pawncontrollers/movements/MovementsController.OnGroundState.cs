@@ -85,7 +85,7 @@ public partial class MovementsController
 		newspeed /= speed;
 		input *= newspeed;
 
-		return input;
+		return input; 
 	}
 
 	Vector3 Accelerate( Vector3 input, Vector3 wishdir, float wishspeed, float speedLimit, float acceleration )
@@ -194,6 +194,7 @@ public partial class MovementsController
 
 	private void ResizeHull(BBox to)
 	{
+		Log.Info( Entity.CollisionBounds );
 		Coroutine.Stop(m_duckCoroutine);
 		m_duckCoroutine = ResizeDuckHull(to);
 		Coroutine.Start(m_duckCoroutine);
