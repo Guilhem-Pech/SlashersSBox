@@ -200,7 +200,8 @@ public abstract partial class Weapon : BaseWeapon
 			ChargeAttackEndTime = 0f;
 		}
 
-		if ( Input.Down( "zoom" ) )
+		/* TODO: Remove this? survivors will have flashlights as weapon and it'll be the primary attack?
+		 if ( Input.Down( "zoom" ) )
 		{
 			if ( CanMeleeAttack && TimeSinceMeleeAttack > (1 / MeleeRate) )
 			{
@@ -208,7 +209,7 @@ public abstract partial class Weapon : BaseWeapon
 				OnMeleeAttack();
 				return;
 			}
-		}
+		}*/
 
 		if ( !IsReloading )
 		{

@@ -15,8 +15,9 @@ namespace Sandbox.pawn.PawnControllers;
 public partial class InventoryController : EntityComponent<Pawn>, ISingletonComponent, IComponentSimulable, IEventListener
 {
 	[Net] private IList<Weapon> OwnedWeapons { get; set; } = new List<Weapon>();
-	[Net, Change(nameof(OnActiveWeaponChanged))] public Weapon? ActiveWeapon { get; private set; }
-	public Weapon? LastActiveWeapon { get; private set; }
+	[Net, Predicted, Change(nameof(OnActiveWeaponChanged))] public Weapon? ActiveWeapon { get; private set; }
+
+	[ClientInput] private int InputWeaponSlot { get; set; } = 0;
 
 	[Net, Predicted]
 	private List<int> CurrentAmmunitionAvailable { get; set; } = Enumerable.Repeat(0, Enum.GetNames<AmmoType>().Length).ToList(); //Workaround the fact we can't replicate dictionary 
@@ -28,7 +29,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	public void OnActiveWeaponChanged( Weapon oldValue, Weapon newValue )
 	{
-		SetActive( newValue );
+		ChangeActiveWeapon( newValue , oldValue);
 	}
 	protected override void OnDeactivate()
 	{
@@ -37,11 +38,37 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	private void OnPlayerRespawn( EventOnRespawn obj )
 	{
 		// TODO This is just for test, we'll see later how to handle that
-		Add( new Pistol(), false );
-		Add( new Knife(), true );
+		Add( new Pistol() );
+		Add( new Knife() );
 	}
 	
-	public bool Add( Weapon weapon, bool makeActive = false ) 
+	public void Simulate( IClient client )
+	{
+		ActiveWeapon?.Simulate( client );
+		
+		if ( OwnedWeapons.Count > 0 )
+		{
+			if ( Input.Pressed( "SlotNext" ) )
+			{
+				InputWeaponSlot = (InputWeaponSlot + 1) % OwnedWeapons.Count;
+			}
+			else if ( Input.Pressed( "SlotPrev" ) )
+			{
+				InputWeaponSlot = (InputWeaponSlot + OwnedWeapons.Count - 1) % OwnedWeapons.Count;
+			}
+		}
+		
+		if ( InputWeaponSlot < OwnedWeapons.Count )
+		{
+			Weapon wantedWeapon = OwnedWeapons[InputWeaponSlot];
+			if ( wantedWeapon != ActiveWeapon )
+			{
+				ChangeActiveWeapon( wantedWeapon, ActiveWeapon );
+			}
+		}
+	}
+	
+	public bool Add( Weapon weapon ) 
 	{
 		Game.AssertServer();
 
@@ -75,11 +102,6 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 		weapon.Parent = Entity;
 		weapon.OnCarryStart( Entity );
 
-		if ( makeActive )
-		{
-			SetActive( weapon );
-		}
-
 		return true;
 	}
 	
@@ -93,23 +115,17 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 		return entity != null && entity.CanCarry( Entity );
 	}
 	
-	public virtual bool SetActive( Weapon entity )
+	public virtual bool ChangeActiveWeapon( Weapon newWeapon , Weapon? oldWeapon)
 	{
-		if ( LastActiveWeapon == entity )
+		if ( newWeapon == oldWeapon )
 			return false;
 		
-		if ( !OwnedWeapons.Contains( entity ) ) return false;
+		if ( !OwnedWeapons.Contains( newWeapon ) ) return false;
 
-		LastActiveWeapon = ActiveWeapon;
-		LastActiveWeapon?.ActiveEnd( Entity, LastActiveWeapon.Owner != Entity );
-		ActiveWeapon = entity;
+		oldWeapon?.ActiveEnd( Entity, oldWeapon.Owner != Entity );
+		ActiveWeapon = newWeapon;
 		ActiveWeapon.ActiveStart(Entity);
 		return true;
-	}
-	
-	public void Simulate( IClient client )
-	{
-		ActiveWeapon?.Simulate( client );
 	}
 	
 	public int AmmoCount( AmmoType configAmmoType )

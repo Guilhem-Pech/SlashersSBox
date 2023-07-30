@@ -120,7 +120,16 @@ public partial class Pawn : AnimatedEntity
 		EyeLocalPosition = Vector3.Up * ((Hull.Maxs.z * 0.9f) * Scale);
 		Coroutine.Simulate( cl );
 	}
-	
+
+	public override void BuildInput()
+	{
+		base.BuildInput();
+		foreach (IComponentBuildInputs components in Components.GetAll<IComponentBuildInputs>())
+		{
+			components.BuildInput();
+		}
+	}
+
 	public override void FrameSimulate( IClient cl )
 	{
 		CameraController?.FrameSimulate( cl );

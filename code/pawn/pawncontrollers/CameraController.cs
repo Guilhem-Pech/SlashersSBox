@@ -3,7 +3,7 @@ using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
 
-public class CameraController : EntityComponent<Pawn>, IComponentSimulable
+public class CameraController : EntityComponent<Pawn>, IComponentSimulable, IComponentBuildInputs
 {
 	bool IsThirdPerson { get; set; } = false;
 	
@@ -11,8 +11,6 @@ public class CameraController : EntityComponent<Pawn>, IComponentSimulable
 	{
 		SimulateRotation();
 	}
-
-	[GameEvent.Client.BuildInput]
 	public void BuildInput()
 	{
 		if ( Input.StopProcessing )
@@ -20,7 +18,7 @@ public class CameraController : EntityComponent<Pawn>, IComponentSimulable
 
 		var look = Input.AnalogLook;
 
-		if ( Entity.ViewAngles.pitch > 90f || Entity.ViewAngles.pitch < -90f )
+		if ( Entity.ViewAngles.pitch is > 90f or < -90f )
 		{
 			look = look.WithYaw( look.yaw * -1f );
 		}
@@ -46,12 +44,11 @@ public class CameraController : EntityComponent<Pawn>, IComponentSimulable
 		
 		if ( IsThirdPerson )
 		{
-			Vector3 targetPos;
 			var pos = Entity.Position + Vector3.Up * 64;
 			var rot = Camera.Rotation * Rotation.FromAxis( Vector3.Up, -16 );
 
 			float distance = 80.0f * Entity.Scale;
-			targetPos = pos + rot.Right * ((Entity.CollisionBounds.Mins.x + 50) * Entity.Scale);
+			var targetPos = pos + rot.Right * ((Entity.CollisionBounds.Mins.x + 50) * Entity.Scale);
 			targetPos += rot.Forward * -distance;
 
 			var tr = Trace.Ray( pos, targetPos )
