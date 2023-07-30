@@ -16,8 +16,9 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	[Net, Predicted] public Weapon? ActiveWeapon { get; private set; }
 	public Weapon? LastActiveWeapon { get; private set; }
-	
-	private readonly IDictionary<AmmoType, int> m_currentAmmunitionAvailable = new Dictionary<AmmoType, int>();
+
+	[Net, Predicted]
+	private List<int> CurrentAmmunitionAvailable { get; set; } = Enumerable.Repeat(0, Enum.GetNames<AmmoType>().Length).ToList(); //Workaround the fact we can't replicate dictionary 
 
 	protected override void OnActivate()
 	{
@@ -26,7 +27,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	protected override void OnDeactivate()
 	{
-		Entity.EventDispatcher.UnregisterAllEvents( this );
+		Entity.EventDispatcher.UnregisterAllEvents( this ); 
 	}
 	private void OnPlayerRespawn( EventOnRespawn obj )
 	{
@@ -114,31 +115,31 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	public int AmmoCount( AmmoType configAmmoType )
 	{
-		m_currentAmmunitionAvailable.TryGetValue( configAmmoType, out var value );
-		return value;
+		if ( (int)configAmmoType >= 0 && (int) configAmmoType < CurrentAmmunitionAvailable.Count )
+		{
+			return CurrentAmmunitionAvailable[(int)configAmmoType];
+		}
+		return 0;
 	}
+	
 	public void GiveAmmo( AmmoType configAmmoType, int remainingAmmo )
 	{
-		if(m_currentAmmunitionAvailable.ContainsKey(configAmmoType)) 
+		if( (int)configAmmoType >= 0 && (int) configAmmoType < CurrentAmmunitionAvailable.Count ) 
 		{
-			m_currentAmmunitionAvailable[configAmmoType] += remainingAmmo;
-		}
-		else 
-		{
-			m_currentAmmunitionAvailable[configAmmoType] = remainingAmmo;
+			CurrentAmmunitionAvailable[(int)configAmmoType] += remainingAmmo;
 		}
 	}
 	public int TakeAmmo(AmmoType configAmmoType, int clipSize)
 	{
 		clipSize = Math.Max( clipSize, 0 );
-		if (!m_currentAmmunitionAvailable.TryGetValue(configAmmoType, out var current))
+		if ((int)configAmmoType >= 0 && (int)configAmmoType < CurrentAmmunitionAvailable.Count)
 		{
-			return 0;
+			var current = CurrentAmmunitionAvailable[(int)configAmmoType];
+			int ammoToReturn = Math.Min(current, clipSize);
+			CurrentAmmunitionAvailable[(int)configAmmoType] -= ammoToReturn;
+
+			return ammoToReturn;
 		}
-
-		int ammoToReturn = Math.Min(current, clipSize);
-		m_currentAmmunitionAvailable[configAmmoType] -= ammoToReturn;
-
-		return ammoToReturn;
+		return 0;
 	}
 }
