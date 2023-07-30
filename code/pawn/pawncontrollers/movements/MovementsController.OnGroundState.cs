@@ -194,7 +194,6 @@ public partial class MovementsController
 
 	private void ResizeHull(BBox to)
 	{
-		Log.Info( Entity.CollisionBounds );
 		Coroutine.Stop(m_duckCoroutine);
 		m_duckCoroutine = ResizeDuckHull(to);
 		Coroutine.Start(m_duckCoroutine);

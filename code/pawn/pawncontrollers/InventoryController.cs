@@ -37,7 +37,8 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	private void OnPlayerRespawn( EventOnRespawn obj )
 	{
 		// TODO This is just for test, we'll see later how to handle that
-		Add( new Pistol(), true );
+		Add( new Pistol(), false );
+		Add( new Knife(), true );
 	}
 	
 	public bool Add( Weapon weapon, bool makeActive = false ) 

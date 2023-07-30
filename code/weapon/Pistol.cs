@@ -1,4 +1,7 @@
-﻿namespace Sandbox.weapon
+﻿using System;
+using Sandbox.pawn.PawnControllers;
+
+namespace Sandbox.weapon
 {
 	[Library]
 	public class PistolConfig : WeaponConfig
@@ -34,7 +37,6 @@
 		protected override void ShootEffects()
 		{
 			Game.AssertClient();
-
 			base.ShootEffects();
 
 			Particles.Create( "particles/pistol_muzzleflash.vpcf", EffectEntity, "muzzle" );

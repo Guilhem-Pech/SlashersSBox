@@ -44,6 +44,7 @@ public abstract partial class Weapon : BaseWeapon
 	public virtual float ChargeAttackDuration => 2f;
 	public virtual string DamageType => "bullet";
 	public virtual CitizenAnimationHelper.HoldTypes HoldType => CitizenAnimationHelper.HoldTypes.Pistol;
+	public virtual CitizenAnimationHelper.Hand Handedness => CitizenAnimationHelper.Hand.Both;
 	public virtual int ViewModelMaterialGroup => 0;
 	public override string ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
 	public override string ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
@@ -224,8 +225,8 @@ public abstract partial class Weapon : BaseWeapon
 	{
 		base.SimulateAnimator( anim );
 		anim.HoldType = HoldType;
+		anim.Handedness = Handedness;
 	}
-
 	public override bool CanPrimaryAttack()
 	{
 		if ( ChargeAttackEndTime > 0f && Time.Now < ChargeAttackEndTime )
