@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Coroutines;
+using Coroutines.Stallers;
 using Sandbox.Utils;
 using Sandbox.weapon;
 
@@ -12,9 +14,8 @@ namespace Sandbox.pawn.PawnControllers;
 /// </summary>
 public partial class InventoryController : EntityComponent<Pawn>, ISingletonComponent, IComponentSimulable, IEventListener
 {
-	private IList<Weapon> m_ownedWeapons = new List<Weapon>();
-	
-	[Net, Predicted] public Weapon? ActiveWeapon { get; private set; }
+	[Net] private IList<Weapon> OwnedWeapons { get; set; } = new List<Weapon>();
+	[Net, Change(nameof(OnActiveWeaponChanged))] public Weapon? ActiveWeapon { get; private set; }
 	public Weapon? LastActiveWeapon { get; private set; }
 
 	[Net, Predicted]
@@ -25,6 +26,10 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 		Entity.EventDispatcher.RegisterEvent<EventOnRespawn>( this, OnPlayerRespawn );
 	}
 	
+	public void OnActiveWeaponChanged( Weapon oldValue, Weapon newValue )
+	{
+		SetActive( newValue );
+	}
 	protected override void OnDeactivate()
 	{
 		Entity.EventDispatcher.UnregisterAllEvents( this ); 
@@ -53,19 +58,19 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 			return false;
 		}
 
+		if ( !weapon.IsValid() )
+			return false;
+		
 		if ( weapon.Owner.IsValid() )
 			return false;
 
 		if ( !CanAdd( weapon ) )
 			return false;
-
-		if ( !weapon.IsValid() )
-			return false;
-
+		
 		if ( !weapon.CanCarry( Entity ) )
 			return false;
 		
-		m_ownedWeapons.Add( weapon );
+		OwnedWeapons.Add( weapon );
 		weapon.Parent = Entity;
 		weapon.OnCarryStart( Entity );
 
@@ -79,7 +84,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	public bool IsCarryingType( Type t )
 	{
-		return m_ownedWeapons.Any( x => x.GetType() == t );
+		return OwnedWeapons.Any( x => x.GetType() == t );
 	}
 	
 	public bool CanAdd( Weapon? entity )
@@ -89,25 +94,18 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	public virtual bool SetActive( Weapon entity )
 	{
-		if ( ActiveWeapon == entity ) return false;
-		if ( !m_ownedWeapons.Contains( entity ) ) return false;
+		if ( LastActiveWeapon == entity )
+			return false;
+		
+		if ( !OwnedWeapons.Contains( entity ) ) return false;
 
 		LastActiveWeapon = ActiveWeapon;
 		LastActiveWeapon?.ActiveEnd( Entity, LastActiveWeapon.Owner != Entity );
 		ActiveWeapon = entity;
 		ActiveWeapon.ActiveStart(Entity);
-
-		SetActiveClient( To.Everyone );
-		
 		return true;
 	}
-
-	[ClientRpc]
-	public void SetActiveClient()
-	{
-		ActiveWeapon.ActiveStart(Entity);
-	}
-
+	
 	public void Simulate( IClient client )
 	{
 		ActiveWeapon?.Simulate( client );
