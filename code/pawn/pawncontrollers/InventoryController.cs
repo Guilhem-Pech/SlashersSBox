@@ -20,7 +20,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	[ClientInput] private int InputWeaponSlot { get; set; } = 0;
 
 	[Net, Predicted]
-	private List<int> CurrentAmmunitionAvailable { get; set; } = Enumerable.Repeat(0, Enum.GetNames<AmmoType>().Length).ToList(); //Workaround the fact we can't replicate dictionary 
+	private List<int> CurrentAmmunition { get; set; } = Enumerable.Repeat(0, Enum.GetNames<AmmoType>().Length).ToList(); //Workaround the fact we can't replicate dictionary 
 
 	protected override void OnActivate()
 	{
@@ -55,6 +55,14 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 			else if ( Input.Pressed( "SlotPrev" ) )
 			{
 				InputWeaponSlot = (InputWeaponSlot + OwnedWeapons.Count - 1) % OwnedWeapons.Count;
+			}
+
+			for (var i = 0; i < OwnedWeapons.Count; ++i)
+			{
+				if(Input.Pressed( $"Slot{i + 1}"))
+				{
+					InputWeaponSlot = i;
+				}
 			}
 		}
 		
@@ -130,28 +138,28 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	
 	public int AmmoCount( AmmoType configAmmoType )
 	{
-		if ( (int)configAmmoType >= 0 && (int) configAmmoType < CurrentAmmunitionAvailable.Count )
+		if ( (int)configAmmoType >= 0 && (int) configAmmoType < CurrentAmmunition.Count )
 		{
-			return CurrentAmmunitionAvailable[(int)configAmmoType];
+			return CurrentAmmunition[(int)configAmmoType];
 		}
 		return 0;
 	}
 	
 	public void GiveAmmo( AmmoType configAmmoType, int remainingAmmo )
 	{
-		if( (int)configAmmoType >= 0 && (int) configAmmoType < CurrentAmmunitionAvailable.Count ) 
+		if( (int)configAmmoType >= 0 && (int) configAmmoType < CurrentAmmunition.Count ) 
 		{
-			CurrentAmmunitionAvailable[(int)configAmmoType] += remainingAmmo;
+			CurrentAmmunition[(int)configAmmoType] += remainingAmmo;
 		}
 	}
 	public int TakeAmmo(AmmoType configAmmoType, int clipSize)
 	{
 		clipSize = Math.Max( clipSize, 0 );
-		if ((int)configAmmoType >= 0 && (int)configAmmoType < CurrentAmmunitionAvailable.Count)
+		if ((int)configAmmoType >= 0 && (int)configAmmoType < CurrentAmmunition.Count)
 		{
-			var current = CurrentAmmunitionAvailable[(int)configAmmoType];
+			var current = CurrentAmmunition[(int)configAmmoType];
 			int ammoToReturn = Math.Min(current, clipSize);
-			CurrentAmmunitionAvailable[(int)configAmmoType] -= ammoToReturn;
+			CurrentAmmunition[(int)configAmmoType] -= ammoToReturn;
 
 			return ammoToReturn;
 		}
