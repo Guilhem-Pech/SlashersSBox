@@ -95,6 +95,7 @@ public partial class Pawn : AnimatedEntity
 			Components.GetOrCreate<AnimatorController>();
 			Components.GetOrCreate<CameraController>();
 			Components.GetOrCreate<InventoryController>();
+			Components.GetOrCreate<InteractionController>();
 		}
 	}
 
