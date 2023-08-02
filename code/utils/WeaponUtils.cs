@@ -86,9 +86,9 @@ public static partial class Util
 				if ( pawn.LifeState != LifeState.Alive )
 					continue;
 
-				var distance = pawn.Position.DistanceToLine( start, end, out var _ );
+				var distance = pawn.Position.SqrDistanceToLine( start, end, out var _ );
 
-				if ( distance >= minDistance && distance <= maxDistance )
+				if ( distance >= minDistance * minDistance && distance <= maxDistance * maxDistance )
 				{
 					PlayFlybySound( To.Single( client ), sound );
 				}
