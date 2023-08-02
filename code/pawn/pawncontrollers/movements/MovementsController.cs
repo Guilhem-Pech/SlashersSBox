@@ -15,7 +15,7 @@ public partial class MovementsController : EntityComponent<Pawn>, ISingletonComp
 	public int GroundAngle => 45;
 	public int JumpSpeed => 300;
 	public float Gravity => 800f;
-	[Net, Predicted] public StaminaHandler CurrentStamina { get; private set; } = new StaminaHandler( 5f );
+	[Net, Predicted, Local] public StaminaHandler CurrentStamina { get; private set; } = new StaminaHandler( 5f );
 
 	public float SqrCurrentSpeed => Entity.Velocity.LengthSquared;
 
