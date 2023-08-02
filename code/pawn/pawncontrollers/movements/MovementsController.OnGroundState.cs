@@ -20,7 +20,7 @@ class EventOnUnDuck : Utils.Event
 
 public partial class MovementsController
 {
-	private float m_desiredSpeed = 0f;
+	private float m_desiredMaxSpeed = 0f;
 	public float SurfaceFriction { get; set; }
 
 	private void OnEnterGroundState()
@@ -33,7 +33,7 @@ public partial class MovementsController
 	{
 		var movement = Entity.InputDirection.Normal;
 		var angles = Entity.ViewAngles.WithPitch( 0 );
-		var moveVector = Rotation.From( angles ) * movement * m_desiredSpeed;
+		var moveVector = Rotation.From( angles ) * movement * m_desiredMaxSpeed;
 		var groundEntity = CheckForGround();
 		
 		Entity.Velocity = Accelerate( Entity.Velocity, moveVector.Normal, moveVector.Length, 800f, 7.5f );
@@ -61,6 +61,7 @@ public partial class MovementsController
 		}
 
 		Entity.GroundEntity = groundEntity;
+		CurrentStamina.Update( Time.Delta );
 	}
 	
 	Vector3 ApplyFriction( Vector3 input, float frictionAmount )
@@ -146,20 +147,38 @@ public partial class MovementsController
 	// Jog state
 	private void OnEnterJogState()
 	{
-		m_desiredSpeed = JogSpeed;
+		m_desiredMaxSpeed = JogSpeed;
 	}
 	
 	
 	//Sprint state
 	private void OnEnterSprintState()
 	{
-		m_desiredSpeed = SprintSpeed;
+		m_desiredMaxSpeed = SprintSpeed;
 	}
+
+	private void OnUpdateSprintState()
+	{
+		if (SqrCurrentSpeed > JogSpeed)
+		{
+			CurrentStamina.DesiredStaminaModifierRate = -1;
+		}
+		else if (SqrCurrentSpeed <= WalkSpeed)
+		{
+			CurrentStamina.DesiredStaminaModifierRate = 1;
+		}
+	}
+
+	private void OnExitSprintState()
+	{
+		CurrentStamina.DesiredStaminaModifierRate = 1;
+	}
+	
 
 	//Walk state
 	private void OnEnterWalkState()
 	{
-		m_desiredSpeed = WalkSpeed; 
+		m_desiredMaxSpeed = WalkSpeed; 
 	}
 	
 	//Duck state
@@ -167,7 +186,7 @@ public partial class MovementsController
 
 	private void OnEnterDuckState()
 	{
-		m_desiredSpeed = DuckSpeed;
+		m_desiredMaxSpeed = DuckSpeed;
 		Entity.EventDispatcher.SendEvent<EventOnDuck>();
 		
 		ResizeHull( Entity.DuckHull );
@@ -197,6 +216,16 @@ public partial class MovementsController
 		Coroutine.Stop(m_duckCoroutine);
 		m_duckCoroutine = ResizeDuckHull(to);
 		Coroutine.Start(m_duckCoroutine);
+	}
+}
+
+class EventOnSprinting : Utils.Event
+{
+	public bool Start;
+
+	public EventOnSprinting( bool start )
+	{
+		Start = start;
 	}
 }
 

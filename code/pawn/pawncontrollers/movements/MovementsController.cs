@@ -1,20 +1,23 @@
-﻿using MyGame;
+﻿using System.Security.Cryptography.X509Certificates;
+using MyGame;
+using Sandbox.pawn.PawnControllers.mechanics;
 using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
 
 public partial class MovementsController : EntityComponent<Pawn>, ISingletonComponent, IComponentSimulable, IEventListener
 {
-	public float JogSpeed { get; set; } = 150f;
-	public float SprintSpeed { get; set; } = 275f;
-	public float WalkSpeed { get; set; } = 80f;
-	 
-	public float DuckSpeed { get; set; } = 80f;
-	
+	public float JogSpeed => 150f;
+	public float SprintSpeed => 275f;
+	public float WalkSpeed => 80f;
+	public float DuckSpeed => 80f;
 	public int StepSize => 24;
 	public int GroundAngle => 45;
-	public int JumpSpeed { get; set; }= 300;
+	public int JumpSpeed => 300;
 	public float Gravity => 800f;
+	[Net, Predicted] public StaminaHandler CurrentStamina { get; private set; } = new StaminaHandler( 5f );
+
+	public float SqrCurrentSpeed => Entity.Velocity.LengthSquared;
 
 	bool Grounded => Entity.GroundEntity.IsValid();
 
