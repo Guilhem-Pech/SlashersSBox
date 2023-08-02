@@ -3,7 +3,7 @@ using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
 
-public partial class MovementsController : EntityComponent<Pawn>, ISingletonComponent, IComponentSimulable
+public partial class MovementsController : EntityComponent<Pawn>, ISingletonComponent, IComponentSimulable, IEventListener
 {
 	public float JogSpeed { get; set; } = 150f;
 	public float SprintSpeed { get; set; } = 275f;

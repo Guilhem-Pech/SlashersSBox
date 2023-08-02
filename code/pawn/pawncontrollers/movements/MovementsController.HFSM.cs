@@ -33,12 +33,20 @@ public partial class MovementsController
 			{
 				builder.AddTransition( States.DuckState, States.JogState , () => !Input.Down( "duck" ) && CanUnduck());
 			}
+			
+			builder.AddTransition( States.OnGroundState, States.SwimmingState , () => IsSwimming);
 			builder.AddTransition( States.OnGroundState, States.InAirState , () => !Grounded);
 		}
 		builder.AddState( States.InAirState , OnEnterAirState, OnUpdateAirState, OnExitAirState);
 		{
 			builder.AddTransition( States.InAirState, States.DuckState , () => Input.Down( "duck" ) && Grounded ); 
+			builder.AddTransition( States.InAirState, States.SwimmingState , () => IsSwimming);
 			builder.AddTransition( States.InAirState, States.OnGroundState , () => Grounded );
+		}
+		builder.AddState( States.SwimmingState , OnEnterSwimState, OnUpdateSwimState, OnExitSwimState);
+		{
+			builder.AddTransition( States.SwimmingState, States.InAirState , () => !IsSwimming && !Grounded );
+			builder.AddTransition( States.SwimmingState, States.OnGroundState , () => !IsSwimming );
 		}
 		m_hfsm = builder.Build();
 	}
@@ -52,6 +60,7 @@ enum States
 	InAirState,
 	WalkState,
 	DuckState,
+	SwimmingState
 }
 
 enum TransitionEvents

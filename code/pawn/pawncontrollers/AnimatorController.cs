@@ -12,6 +12,7 @@ public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IE
 
 
 	private int m_duckLevel = 0;
+	private bool m_swimming = false;
 	
 	protected override void OnActivate()
 	{
@@ -21,10 +22,21 @@ public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IE
 		Entity.EventDispatcher.RegisterEvent<EventOnJump>( this, OnPawnJumped );
 		Entity.EventDispatcher.RegisterEvent<EventOnDuck>( this, OnPawnDuck );
 		Entity.EventDispatcher.RegisterEvent<EventOnUnDuck>( this, OnPawnUnduck );
+		Entity.EventDispatcher.RegisterEvent<EventOnStartSwimming>( this, OnStartSwim );
+		Entity.EventDispatcher.RegisterEvent<EventOnEndSwimming>( this, OnEndSwim );
 		base.OnActivate();
 	}
- 
-	private void OnPawnDuck( EventOnDuck obj )
+
+	private void OnEndSwim( EventOnEndSwimming obj )
+	{
+		m_swimming = false;
+	}
+	private void OnStartSwim( EventOnStartSwimming obj )
+	{
+		m_swimming = true;
+	}
+
+	private void OnPawnDuck( EventOnDuck obj ) 
 	{
 		m_duckLevel = 1;
 	}
@@ -54,5 +66,6 @@ public class AnimatorController : EntityComponent<Pawn>, ISingletonComponent, IE
 		m_helper.IsGrounded = Entity.GroundEntity.IsValid();
 		m_helper.DuckLevel = m_duckLevel;
 		m_helper.AimBodyWeight = AimBodyWeight;
+		m_helper.IsSwimming = m_swimming;
 	}
 }
