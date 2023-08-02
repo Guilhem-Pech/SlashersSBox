@@ -82,8 +82,8 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
     private readonly Action? m_onExitAction = NoActivity;
 
     private State<TName, TEvent>? m_parentState = null;
-    private List<State<TName, TEvent>> m_children = new();
-    private List<Transition<TEvent>> m_transitions = new();
+    private readonly List<State<TName, TEvent>> m_children = new();
+    private readonly List<Transition<TEvent>> m_transitions = new();
 
     public void AddTransition(Transition<TEvent> transition)
     {
