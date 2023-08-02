@@ -20,7 +20,7 @@ public partial class MovementsController
 		var moveVector = Rotation.From( angles ) * movement * 320f;
 		
 		Entity.Velocity = Accelerate( Entity.Velocity, moveVector.Normal, moveVector.Length, 100, 20f );
-		Entity.Velocity += Vector3.Down * Gravity * Time.Delta;
+		Entity.Velocity += Vector3.Up * 0.3f * Gravity * Time.Delta; // TODO improve buoyancy effect
 
 		var mh = new MoveHelper( Entity.Position, Entity.Velocity );
 		mh.Trace = mh.Trace.Size( Entity.Hull ).Ignore( Entity );
