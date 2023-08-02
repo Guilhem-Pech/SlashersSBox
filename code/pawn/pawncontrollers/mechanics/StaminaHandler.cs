@@ -40,6 +40,7 @@ public partial class StaminaHandler : BaseNetworkable
 	
 	public void ForceCurrentStamina( float _value )
 	{
+		Game.AssertServer();
 		using ( Prediction.Off() )
 		{
 			Value = Math.Clamp( _value, 0, MaxStaminaValue );
