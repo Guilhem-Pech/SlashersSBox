@@ -14,13 +14,13 @@ public partial class MovementsController
 		{
 			builder.AddState( States.JogState ,States.OnGroundState, OnEnterJogState);
 			{
-				builder.AddTransition( States.JogState, States.RunState , () => Input.Down( "run" ) && CurrentStamina.CurrentStamina > 0);
+				builder.AddTransition( States.JogState, States.RunState , () => Input.Down( "run" ) && CurrentStamina.Value > 0);
 				builder.AddTransition( States.JogState, States.WalkState , () => Input.Down( "walk" ));
 				builder.AddTransition( States.JogState, States.DuckState , () => Input.Down( "duck" ));
 			}
 			builder.AddState( States.RunState ,States.OnGroundState, OnEnterSprintState, OnUpdateSprintState, OnExitSprintState);
 			{
-				builder.AddTransition( States.RunState, States.JogState , () => CurrentStamina.CurrentStamina <= 0);
+				builder.AddTransition( States.RunState, States.JogState , () => CurrentStamina.Value <= 0);
 				builder.AddTransition( States.RunState, States.JogState , () => !Input.Down( "run" ));
 				builder.AddTransition( States.RunState, States.WalkState , () => Input.Down( "walk" ));
 				builder.AddTransition( States.RunState, States.DuckState , () => Input.Down( "duck" ));
