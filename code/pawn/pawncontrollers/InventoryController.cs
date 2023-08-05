@@ -20,7 +20,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	[ClientInput] private int InputWeaponSlot { get; set; } = 0;
 
 	[Net, Predicted]
-	private List<int> CurrentAmmunition { get; set; } = Enumerable.Repeat(0, Enum.GetNames<AmmoType>().Length).ToList(); //Workaround the fact we can't replicate dictionary 
+	private IList<int> CurrentAmmunition { get; set; } = Enumerable.Repeat(0, Enum.GetNames<AmmoType>().Length).ToList(); //Workaround the fact we can't replicate dictionary 
 
 	protected override void OnActivate()
 	{

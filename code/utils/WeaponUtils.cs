@@ -9,9 +9,10 @@ public static partial class Util
 	public static partial class Weapons
 	{
 		[ClientRpc]
-		public static void PlayFlybySound( string sound )
+		public static void PlayFlybySound( string? sound )
 		{
-			Sound.FromScreen( sound );
+			if(sound != null)
+				Sound.FromScreen( sound );
 		}
 
 		public static IEnumerable<T> GetBlastEntities<T>( Vector3 position, float radius ) where T : Entity
@@ -21,7 +22,6 @@ public static partial class Util
 				.Where( v =>
 				{
 					var trace = Trace.Ray( position, v.WorldSpaceBounds.Center )
-					 .WorldAndEntities()
 					 .Ignore( v )
 					 .WithTag( "blastproof" )
 					 .Run();
@@ -38,7 +38,6 @@ public static partial class Util
 				.Where( v =>
 				{
 					var trace = Trace.Ray( position, v.WorldSpaceBounds.Center )
-				 .WorldAndEntities()
 				 .Ignore( v )
 				 .WithTag( "blastproof" )
 				 .Run();
@@ -72,7 +71,7 @@ public static partial class Util
 			return damage;
 		}
 
-		public static void PlayFlybySounds( Entity attacker, Entity victim, Vector3 start, Vector3 end, float minDistance, float maxDistance, List<string> sounds )
+		public static void PlayFlybySounds( Entity attacker, Entity? victim, Vector3 start, Vector3 end, float minDistance, float maxDistance, List<string?> sounds )
 		{
 			var sound = Game.Random.FromList( sounds );
 
@@ -95,7 +94,7 @@ public static partial class Util
 			}
 		}
 
-		public static void PlayFlybySounds( Entity attacker, Vector3 start, Vector3 end, float minDistance, float maxDistance, List<string> sounds )
+		public static void PlayFlybySounds( Entity attacker, Vector3 start, Vector3 end, float minDistance, float maxDistance, List<string?> sounds )
 		{
 			PlayFlybySounds( attacker, null, start, end, minDistance, maxDistance, sounds );
 		}

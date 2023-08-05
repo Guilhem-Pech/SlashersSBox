@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using MyGame;
-using Sandbox.pawn.PawnControllers.mechanics;
+﻿using Sandbox.pawn.PawnControllers.mechanics;
 using Sandbox.Utils;
 
 namespace Sandbox.pawn.PawnControllers;
@@ -34,7 +32,7 @@ public partial class MovementsController : EntityComponent<Pawn>, ISingletonComp
 
 	public void Simulate( IClient cl )
 	{
-		m_hfsm.Update();
+		m_hfsm?.Update();
 	}
 	
 	[GameEvent.Client.BuildInput]
@@ -43,7 +41,7 @@ public partial class MovementsController : EntityComponent<Pawn>, ISingletonComp
 		Entity.InputDirection = Input.AnalogMove;
 	}
 
-	Entity CheckForGround()
+	Entity? CheckForGround()
 	{
 		if ( Entity.Velocity.z > 100f )
 			return null;

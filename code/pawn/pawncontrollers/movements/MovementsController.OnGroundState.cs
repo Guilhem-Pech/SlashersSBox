@@ -182,7 +182,7 @@ public partial class MovementsController
 	}
 	
 	//Duck state
-	private CoroutineEnumerator m_duckCoroutine;
+	private CoroutineEnumerator? m_duckCoroutine;
 
 	private void OnEnterDuckState()
 	{
@@ -192,7 +192,7 @@ public partial class MovementsController
 		ResizeHull( Entity.DuckHull );
 	}
 	
-	CoroutineEnumerator ResizeDuckHull(BBox to)
+	CoroutineEnumerator? ResizeDuckHull(BBox to)
 	{
 		var curHull = Entity.Hull;
 		float duckLerp = 0f;
@@ -213,9 +213,17 @@ public partial class MovementsController
 
 	private void ResizeHull(BBox to)
 	{
-		Coroutine.Stop(m_duckCoroutine);
+		if ( m_duckCoroutine != null )
+		{
+			Coroutine.Stop( m_duckCoroutine );
+		}
+
 		m_duckCoroutine = ResizeDuckHull(to);
-		Coroutine.Start(m_duckCoroutine);
+		
+		if ( m_duckCoroutine != null )
+		{
+			Coroutine.Start( m_duckCoroutine );
+		}
 	}
 }
 

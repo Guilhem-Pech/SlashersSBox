@@ -8,7 +8,7 @@ namespace Sandbox.Manager.GameFlow
 {
 	public partial class GameFlowModule
 	{
-		private List<SpawnPoint> m_randomSpawnPoints = new();
+		private List<SpawnPoint?> m_randomSpawnPoints = new();
 		private int m_indexRandomSpawnpoint = 0;
 
 		/// <summary>
@@ -21,7 +21,7 @@ namespace Sandbox.Manager.GameFlow
 
 			m_onClientJoined += OnClientJoined;
 			// Get all of the spawnpoints
-			IEnumerable<SpawnPoint> spawnpoints = Sandbox.Entity.All.OfType<SpawnPoint>();
+			IEnumerable<SpawnPoint?> spawnpoints = Sandbox.Entity.All.OfType<SpawnPoint>();
 
 			// chose a random one
 			m_randomSpawnPoints = spawnpoints.OrderBy( _ => Guid.NewGuid() ).ToList();
@@ -31,7 +31,7 @@ namespace Sandbox.Manager.GameFlow
 				PlacePawnAtRandomPoint( pawn );
 			}
 		}
-
+		
 		/// <summary>
 		/// When exiting the game, removes the actions associated with player joining.
 		/// </summary>
@@ -43,7 +43,7 @@ namespace Sandbox.Manager.GameFlow
 		/// <summary>
 		/// When a new client joins, this function is invoked to spawn a new pawn for them and places it at a random point.
 		/// </summary>
-		private void OnClientJoined( object sender, ClientJoinedEvent e )
+		private void OnClientJoined( object? sender, ClientJoinedEvent e )
 		{
 			if ( !Game.IsServer )
 				return;
@@ -69,7 +69,7 @@ namespace Sandbox.Manager.GameFlow
 		/// </summary>
 		private void PlacePawnAtRandomPoint( Pawn pawn )
 		{
-			SpawnPoint randomSpawnPoint = m_indexRandomSpawnpoint < m_randomSpawnPoints.Count
+			SpawnPoint? randomSpawnPoint = m_indexRandomSpawnpoint < m_randomSpawnPoints.Count
 				? m_randomSpawnPoints[m_indexRandomSpawnpoint]
 				: null;
 			// if it exists, place the pawn there

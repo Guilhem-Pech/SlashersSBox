@@ -68,10 +68,10 @@ public partial class Pawn : AnimatedEntity
 	[Net, Predicted]
 	public BBox Hull { set; get; }
 
-	[BindComponent] public MovementsController MovementsController { get; }
-	[BindComponent] public CameraController CameraController { get; }
-	[BindComponent] public AnimatorController AnimatorController { get; }
-	[BindComponent] public InventoryController InventoryController { get; }
+	[BindComponent] public MovementsController? MovementsController { get; }
+	[BindComponent] public CameraController? CameraController { get; }
+	[BindComponent] public AnimatorController? AnimatorController { get; }
+	[BindComponent] public InventoryController? InventoryController { get; }
 
 	public override Ray AimRay => new Ray( EyePosition, EyeRotation.Forward );
 	public TimeSince TimeSinceLastHit { get; set; } = new TimeSince(); // TODO: Use it
@@ -169,8 +169,11 @@ public partial class Pawn : AnimatedEntity
 		
 		if ( !trace.Hit ) return;
 
-		float sqrJogSpeed = MovementsController.JogSpeed * MovementsController.JogSpeed;
-		volume *= Velocity.WithZ( 0f ).LengthSquared.LerpInverse( 0,  sqrJogSpeed * 0.8f) * 1f;
+		if (MovementsController != null)
+		{
+			float sqrJogSpeed = MovementsController.JogSpeed * MovementsController.JogSpeed;
+			volume *= Velocity.WithZ( 0f ).LengthSquared.LerpInverse( 0,  sqrJogSpeed * 0.8f) * 1f;
+		}
 
 		trace.Surface.DoFootstep( this, trace, foot, volume );
 		

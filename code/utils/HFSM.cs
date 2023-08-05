@@ -45,9 +45,13 @@ public class Transition<TEvent> where TEvent: struct, Enum
 	    return builder.ToString();
     }
 }
+
+static class DefaultActivity
+{
+	internal static readonly Action? NoActivity = () => { };
+}
 public class State<TName, TEvent> : IState where TEvent: struct, Enum where TName: Enum
 {
-    private static readonly Action? NoActivity = () => { };
     public State(TName name)
     {
         Name = name;
@@ -77,9 +81,9 @@ public class State<TName, TEvent> : IState where TEvent: struct, Enum where TNam
 
     public TName Name { get; private set; }
 
-    private readonly Action? m_onEnterAction = NoActivity;
-    private readonly Action? m_onUpdateAction = NoActivity;
-    private readonly Action? m_onExitAction = NoActivity;
+    private readonly Action? m_onEnterAction = DefaultActivity.NoActivity;
+    private readonly Action? m_onUpdateAction = DefaultActivity.NoActivity;
+    private readonly Action? m_onExitAction = DefaultActivity.NoActivity;
 
     private State<TName, TEvent>? m_parentState = null;
     private readonly List<State<TName, TEvent>> m_children = new();

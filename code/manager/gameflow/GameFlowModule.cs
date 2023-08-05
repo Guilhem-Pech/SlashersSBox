@@ -4,7 +4,7 @@ namespace Sandbox.Manager.GameFlow;
 
 public partial class GameFlowModule : AGameModule
 {
-	private EventHandler<ClientJoinedEvent> m_onClientJoined;
+	private EventHandler<ClientJoinedEvent>? m_onClientJoined;
 	
 	[GameEvent.Server.ClientJoined]
 	private void ClientJoined( ClientJoinedEvent e )

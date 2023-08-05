@@ -13,7 +13,7 @@ public abstract partial class Weapon : BaseWeapon
 	public virtual string MuzzleAttachment => "muzzle";
 	public virtual string MuzzleFlashEffect => "particles/pistol_muzzleflash.vpcf";
 
-	public virtual List<string> FlybySounds => new()
+	public virtual List<string?> FlybySounds => new()
 	{
 		"flyby.rifleclose1", "flyby.rifleclose2", "flyby.rifleclose3", "flyby.rifleclose4"
 	};

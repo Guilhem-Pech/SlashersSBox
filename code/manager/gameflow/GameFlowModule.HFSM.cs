@@ -4,7 +4,7 @@ namespace Sandbox.Manager.GameFlow;
 
 public partial class GameFlowModule
 {
-	private HFSM<States, TransitionEvents> m_hfsm;
+	private HFSM<States, TransitionEvents>? m_hfsm;
 
 	public string DebugCurrentState => m_hfsm != null ? m_hfsm.GetDebugCurrentStateName() : string.Empty;
 
@@ -17,12 +17,12 @@ public partial class GameFlowModule
 	[GameEvent.Tick]
 	private void OnUpdate()
 	{
-		m_hfsm.Update();
+		m_hfsm?.Update();
 	}
 
 	protected override void OnDeactivate()
 	{
-		m_hfsm.Stop();
+		m_hfsm?.Stop();
 	}
 
 	private void BuildHFSM()
