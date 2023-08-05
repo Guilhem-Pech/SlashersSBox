@@ -16,6 +16,7 @@ namespace Sandbox;
 [Prefab]
 public partial class Slashers : Sandbox.GameManager
 {
+	[BindComponent] public GameFlowModule GameFlowModule { get; }
 	
 	/// <summary>
 	/// Called when the game is created (on both the server and client)
@@ -24,7 +25,7 @@ public partial class Slashers : Sandbox.GameManager
 	{
 		if ( Game.IsServer )
 		{
-			Components.Create<GameFlowModule>();
+			Components.GetOrCreate<GameFlowModule>();
 		}
 		
 		if ( Game.IsClient )
