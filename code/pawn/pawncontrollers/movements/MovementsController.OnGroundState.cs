@@ -45,6 +45,7 @@ public partial class MovementsController
 		}
 
 		var mh = new MoveHelper( Entity.Position, Entity.Velocity );
+		mh.MaxStandableAngle = GroundAngle;
 		mh.Trace = mh.Trace.Size( Entity.Hull ).Ignore( Entity );
 
 		if ( mh.TryUnstuck() )
