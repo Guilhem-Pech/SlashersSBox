@@ -27,7 +27,7 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 		Entity.EventDispatcher.RegisterEvent<EventOnRespawn>( this, OnPlayerRespawn );
 	}
 	
-	public void OnActiveWeaponChanged( Weapon oldValue, Weapon newValue )
+	public void OnActiveWeaponChanged( Weapon? oldValue, Weapon? newValue )
 	{
 		ChangeActiveWeapon( newValue , oldValue);
 	}
@@ -123,16 +123,16 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 		return entity != null && entity.CanCarry( Entity );
 	}
 	
-	public virtual bool ChangeActiveWeapon( Weapon newWeapon , Weapon? oldWeapon)
+	public virtual bool ChangeActiveWeapon( Weapon? newWeapon , Weapon? oldWeapon)
 	{
 		if ( newWeapon == oldWeapon )
 			return false;
 		
-		if ( !OwnedWeapons.Contains( newWeapon ) ) return false;
+		if ( newWeapon != null && !OwnedWeapons.Contains( newWeapon ) ) return false;
 
 		oldWeapon?.ActiveEnd( Entity, oldWeapon.Owner != Entity );
 		ActiveWeapon = newWeapon;
-		ActiveWeapon.ActiveStart(Entity);
+		ActiveWeapon?.ActiveStart(Entity);
 		return true;
 	}
 	
