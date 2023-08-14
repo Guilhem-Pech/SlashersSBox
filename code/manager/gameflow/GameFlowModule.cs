@@ -1,14 +1,21 @@
 ﻿using System;
+using Sandbox.Utils;
 
 namespace Sandbox.Manager.GameFlow;
 
-public partial class GameFlowModule : AGameModule
+public partial class GameFlowModule : AGameModule, IEventListener
 {
-	private EventHandler<ClientJoinedEvent>? m_onClientJoined;
+	public EventDispatcher EventDispatcher { private set; get; } = new EventDispatcher();
 	
 	[GameEvent.Server.ClientJoined]
 	private void ClientJoined( ClientJoinedEvent e )
 	{
-		m_onClientJoined?.Invoke( this, e );
+		EventDispatcher.SendEvent<EventOnClientJoined>( e.Client );
 	}
+}
+
+public class EventOnClientJoined : Utils.Event
+{
+	public IClient Client { private set; get; }
+	EventOnClientJoined( IClient client ) { Client = client; }
 }

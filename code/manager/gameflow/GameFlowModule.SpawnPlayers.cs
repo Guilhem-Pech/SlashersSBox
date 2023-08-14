@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyGame;
 using Pawn = Sandbox.pawn.Pawn;
 
 namespace Sandbox.Manager.GameFlow
@@ -19,7 +18,8 @@ namespace Sandbox.Manager.GameFlow
 			if ( !Game.IsServer )
 				return;
 
-			m_onClientJoined += OnClientJoined;
+			EventDispatcher.RegisterEvent<EventOnClientJoined>( this, OnClientJoined);
+			
 			// Get all of the spawnpoints
 			IEnumerable<SpawnPoint?> spawnpoints = Sandbox.Entity.All.OfType<SpawnPoint>();
 
@@ -27,7 +27,7 @@ namespace Sandbox.Manager.GameFlow
 			m_randomSpawnPoints = spawnpoints.OrderBy( _ => Guid.NewGuid() ).ToList();
 			foreach ( IClient client in Game.Clients )
 			{
-				var pawn = SpawnPawn( client );
+				var pawn = SpawnPawn<Pawn>( client );
 				PlacePawnAtRandomPoint( pawn );
 			}
 		}
@@ -37,27 +37,27 @@ namespace Sandbox.Manager.GameFlow
 		/// </summary>
 		private void OnExitSpawnPlayers()
 		{
-			m_onClientJoined -= OnClientJoined;
+			EventDispatcher.UnregisterEvent<EventOnClientJoined>(this);
 		}
 
 		/// <summary>
 		/// When a new client joins, this function is invoked to spawn a new pawn for them and places it at a random point.
 		/// </summary>
-		private void OnClientJoined( object? sender, ClientJoinedEvent e )
+		private void OnClientJoined( EventOnClientJoined eventOnClientJoined )
 		{
 			if ( !Game.IsServer )
 				return;
 
-			var pawn = SpawnPawn( e.Client );
+			var pawn = SpawnPawn<Pawn>( eventOnClientJoined.Client );
 			PlacePawnAtRandomPoint( pawn );
 		}
 		
 		/// <summary>
 		/// Spawns a new pawn for the given client and assigns it to them.
 		/// </summary>
-		private Pawn SpawnPawn( IClient client )
+		private T SpawnPawn<T>( IClient client ) where T : Pawn, new()
 		{
-			var pawn = new Pawn { };
+			var pawn = new T { };
 			client.Pawn = pawn;
 			pawn.Respawn();
 			pawn.DressFromClient( client );
