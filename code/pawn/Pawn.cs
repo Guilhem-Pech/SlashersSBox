@@ -68,6 +68,7 @@ public partial class Pawn : AnimatedEntity
 	[Net, Predicted]
 	public BBox Hull { set; get; }
 
+	public float MaxHealth { get; set; } = 100f;
 	[BindComponent] public MovementsController? MovementsController { get; }
 	[BindComponent] public CameraController? CameraController { get; }
 	[BindComponent] public AnimatorController? AnimatorController { get; }
@@ -102,8 +103,10 @@ public partial class Pawn : AnimatedEntity
 	public void Respawn()
 	{
 		Hull = DefaultHull;
+		Health = MaxHealth;
 		EventDispatcher.SendEvent<EventOnRespawn>();
 	}
+
 
 	public void DressFromClient( IClient cl )
 	{

@@ -73,4 +73,9 @@ public partial class MovementsController : EntityComponent<Pawn>, ISingletonComp
 		}
 		return false;
 	}
+	
+	public void OverrideMaxStamina( float i )
+	{
+		CurrentStamina.MaxStaminaValue = i;
+	}
 }
