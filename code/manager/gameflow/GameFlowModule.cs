@@ -17,5 +17,5 @@ public partial class GameFlowModule : AGameModule, IEventListener
 public class EventOnClientJoined : Utils.Event
 {
 	public IClient Client { private set; get; }
-	EventOnClientJoined( IClient client ) { Client = client; }
+	public EventOnClientJoined( IClient client ) { Client = client; }
 }
