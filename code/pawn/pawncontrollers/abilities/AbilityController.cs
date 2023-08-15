@@ -6,11 +6,11 @@ namespace Sandbox.pawn.pawncontrollers.abilities;
 
 public class AbilityController : EntityComponent<Pawn>, IComponentSimulable
 {
-	private readonly Dictionary<Type, IAbility> m_currentAbilities = new(); // May have issue later if we want to replicate it ...
+	private readonly Dictionary<string, IAbility> m_currentAbilities = new();
 
 	public void AddAbility( IAbility ability )
 	{
-		Type type = ability.GetType();
+		var type = ability.GetType().ToString(); // Need to convert it to be networkable
 		if ( m_currentAbilities.TryAdd( type, ability ))
 		{
 			ability.OnActivate( Entity );
