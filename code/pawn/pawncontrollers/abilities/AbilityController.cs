@@ -1,27 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Sandbox.Utils;
 
 namespace Sandbox.pawn.pawncontrollers.abilities;
 
-public class AbilityController : EntityComponent<Pawn>
+public class AbilityController : EntityComponent<Pawn>, IComponentSimulable
 {
-	private readonly List<IAbility> m_currentAbilities = new List<IAbility>();
+	private readonly Dictionary<Type, IAbility> m_currentAbilities = new(); // May have issue later if we want to replicate it ...
 
-
-	public void AddAbility(IAbility ability)
+	public void AddAbility( IAbility ability )
 	{
-		// May need to add a check that a player doesn't already have the ability
-		m_currentAbilities.Add( ability );
-		ability.OnActivate(Entity);
+		Type type = ability.GetType();
+		if ( m_currentAbilities.TryAdd( type, ability ))
+		{
+			ability.OnActivate( Entity );
+		}
 	}
-	
-	
 
 	protected override void OnDeactivate()
 	{
-		foreach (IAbility currentAbility in m_currentAbilities)
+		foreach (IAbility ability in m_currentAbilities.Values)
 		{
-			currentAbility.OnDeactivate();
+			ability.OnDeactivate();
 		}
 		m_currentAbilities.Clear();
+	}
+
+	public void Simulate( IClient client )
+	{
+		foreach (IAbility ability in m_currentAbilities.Values)
+		{
+			if ( ability is not ISimulable simulableAbility )
+				continue;
+			simulableAbility.Simulate( client );
+		}
 	}
 }
