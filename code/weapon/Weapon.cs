@@ -49,15 +49,13 @@ public abstract partial class Weapon : BaseWeapon
 	public override string ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
 	public override string ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
 
-	[Net] public int Slot { get; set; }
-
 	[Net, Predicted] public int AmmoClip { get; set; }
 
 	[Net, Predicted] public TimeSince TimeSinceReload { get; set; }
 
 	[Net, Predicted] public bool IsReloading { get; set; }
 
-	[Net, Predicted] public TimeSince TimeSinceDeployed { get; set; }
+	[Net] public TimeSince TimeSinceDeployed { get; set; }
 
 	[Net, Predicted] public TimeSince TimeSinceChargeAttack { get; set; }
 
@@ -138,8 +136,10 @@ public abstract partial class Weapon : BaseWeapon
 	public override void ActiveStart( Entity owner )
 	{
 		base.ActiveStart( owner );
-
-		TimeSinceDeployed = 0f;
+		if ( Game.IsServer )
+		{
+			TimeSinceDeployed = 0f;
+		}
 	}
 
 	public override void ActiveEnd( Entity owner, bool dropped )

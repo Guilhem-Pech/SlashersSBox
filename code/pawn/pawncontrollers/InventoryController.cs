@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Coroutines;
-using Coroutines.Stallers;
 using Sandbox.Utils;
 using Sandbox.weapon;
 
@@ -15,7 +13,7 @@ namespace Sandbox.pawn.PawnControllers;
 public partial class InventoryController : EntityComponent<Pawn>, ISingletonComponent, IComponentSimulable, IEventListener
 {
 	[Net] private IList<Weapon> OwnedWeapons { get; set; } = new List<Weapon>();
-	[Net, Predicted, Change(nameof(OnActiveWeaponChanged))] public Weapon? ActiveWeapon { get; private set; }
+	[Net, Change(nameof(OnActiveWeaponChanged))] public Weapon? ActiveWeapon { get; private set; }
 
 	[ClientInput] private int InputWeaponSlot { get; set; } = 0;
 
@@ -25,11 +23,6 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	protected override void OnActivate()
 	{
 		Entity.EventDispatcher.RegisterEvent<EventOnRespawn>( this, OnPlayerRespawn );
-	}
-	
-	public void OnActiveWeaponChanged( Weapon? oldValue, Weapon? newValue )
-	{
-		ChangeActiveWeapon( newValue , oldValue);
 	}
 	protected override void OnDeactivate()
 	{
@@ -66,16 +59,28 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 			}
 		}
 		
-		if ( InputWeaponSlot < OwnedWeapons.Count )
+		if (Game.IsServer && InputWeaponSlot < OwnedWeapons.Count )
 		{
 			Weapon wantedWeapon = OwnedWeapons[InputWeaponSlot];
 			if ( wantedWeapon != ActiveWeapon )
 			{
-				ChangeActiveWeapon( wantedWeapon, ActiveWeapon );
+				ChangeWeapon(wantedWeapon);
 			}
 		}
 	}
-	
+
+	void ChangeWeapon( Weapon? newWeapon )
+	{
+		Game.AssertServer(  );
+		ActiveWeapon?.ActiveEnd( Entity, ActiveWeapon.Owner != Entity );
+		ActiveWeapon = newWeapon;
+		newWeapon?.ActiveStart(Entity);
+	}
+	public void OnActiveWeaponChanged( Weapon? oldValue, Weapon? newValue )
+	{
+		oldValue?.ActiveEnd( Entity, oldValue.Owner != Entity );
+		newValue?.ActiveStart(Entity);
+	}
 	public bool Add( Weapon weapon ) 
 	{
 		Game.AssertServer();
@@ -121,19 +126,6 @@ public partial class InventoryController : EntityComponent<Pawn>, ISingletonComp
 	public bool CanAdd( Weapon? entity )
 	{
 		return entity != null && entity.CanCarry( Entity );
-	}
-	
-	public virtual bool ChangeActiveWeapon( Weapon? newWeapon , Weapon? oldWeapon)
-	{
-		if ( newWeapon == oldWeapon )
-			return false;
-		
-		if ( newWeapon != null && !OwnedWeapons.Contains( newWeapon ) ) return false;
-
-		oldWeapon?.ActiveEnd( Entity, oldWeapon.Owner != Entity );
-		ActiveWeapon = newWeapon;
-		ActiveWeapon?.ActiveStart(Entity);
-		return true;
 	}
 	
 	public int AmmoCount( AmmoType configAmmoType )
